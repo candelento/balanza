@@ -1473,22 +1473,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(errorDetail);
             }
 
-            // Handle PDF Blob response
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            
-            // Open PDF in new window/tab for printing
-            const printWindow = window.open(url, '_blank');
-            if (printWindow) {
-                showToast(`Ticket generado. Por favor imprímalo desde la nueva ventana.`, 'success');
+            // Handle JSON response for direct printing/saving
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast(result.message || 'Ticket guardado en Pesadas e impreso.', 'success');
             } else {
-                showToast(`Ticket generado. Si no se abrió, revise su bloqueador de pop-ups.`, 'warning');
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `ticket_${type}_${id}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                // Fallback if status is not success but response was ok
+                showToast('Operación completada.', 'info');
             }
 
             // Cambiar el valor del selector de copias a 1
@@ -1577,19 +1568,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(errorDetail);
             }
 
-            // Handle PDF Blob response (Download)
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `ticket_${type}_${id}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-
-            showToast('Ticket guardado y descargado con éxito.', 'success');
+            // Handle JSON response (Saved to server)
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast(result.message || 'Ticket guardado correctamente en el servidor.', 'success');
+            } else {
+                showToast('Operación completada.', 'info');
+            }
 
         } catch (error) {
             console.error(`Error al solicitar guardar el PDF (${type}):`, error);

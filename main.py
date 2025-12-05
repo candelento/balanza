@@ -504,7 +504,7 @@ def _ensure_sumatrapdf():
 
 import platform
 
-def _try_print_file_windows(filepath: str):
+def _try_print_file_windows(filepath: str, copies: int = 1):
     """Try to print a file using the system's default printer.
     Supports Windows (SumatraPDF/win32api) and Linux (lp).
     """
@@ -514,8 +514,10 @@ def _try_print_file_windows(filepath: str):
     if system_name == "Linux":
         try:
             # Use lp command for CUPS on Linux
-            subprocess.run(["lp", str(filepath)], check=True)
-            print(f"✓ Impreso usando lp: {filepath}")
+            # lp -n <copies> <filename>
+            cmd = ["lp", "-n", str(copies), str(filepath)]
+            subprocess.run(cmd, check=True)
+            print(f"✓ Impreso usando lp ({copies} copias): {filepath}")
             return
         except FileNotFoundError:
              raise Exception("Comando 'lp' no encontrado. Asegúrese de tener CUPS instalado y configurado en el servidor.")
@@ -544,13 +546,15 @@ def _try_print_file_windows(filepath: str):
             if sumatra_path and os.path.exists(sumatra_path):
                 try:
                     # Use SumatraPDF with -silent flag for background printing
+                    # -print-settings "Nx" prints N copies
                     subprocess.run([
                         sumatra_path,
                         "-silent",
                         "-print-to-default",
+                        "-print-settings", f"{copies}x",
                         str(filepath)
                     ], check=True, timeout=30)
-                    print(f"✓ Impreso usando SumatraPDF en modo silencioso: {filepath}")
+                    print(f"✓ Impreso usando SumatraPDF en modo silencioso ({copies} copias): {filepath}")
                     return
                 except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
                     print(f"Error con SumatraPDF en {sumatra_path}: {e}")
@@ -564,7 +568,13 @@ def _try_print_file_windows(filepath: str):
             # Import at runtime to avoid import-time failures on non-Windows runners
             import win32api  # type: ignore
             print(f"SumatraPDF no disponible, usando impresión por defecto de Windows: {filepath}")
-            win32api.ShellExecute(0, "print", str(filepath), None, ".", 0)
+            # win32api.ShellExecute does not easily support copies, so we loop
+            for _ in range(copies):
+                win32api.ShellExecute(0, "print", str(filepath), None, ".", 0)
+                # Small delay between print jobs to avoid overwhelming the spooler
+                if copies > 1:
+                    import time
+                    time.sleep(1)
         except Exception as e:
             # Wrap and raise a generic exception so callers can produce an HTTP response
             raise Exception(f"Error de impresión: No se pudo imprimir ni con SumatraPDF ni con el sistema por defecto: {e}")
@@ -1021,24 +1031,18 @@ async def imprimir_compra_pdf(compra_id: int, copies: int = 2, date: Optional[st
             raise HTTPException(status_code=500, detail=_format_save_error(e))
 
     try:
-        # Generate PDF
-        filename = os.path.join(tempfile.gettempdir(), f"recibo_compra_{compra_id}_{datetime.now().timestamp()}.pdf")
+        # Ensure pesadas directory exists
+        pesadas_dir = os.path.join(os.getcwd(), "pesadas")
+        os.makedirs(pesadas_dir, exist_ok=True)
+
+        # Generate PDF in pesadas folder
+        filename = os.path.join(pesadas_dir, f"ticket_compra_{compra_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
         crear_pdf_recibo(datos, filename, tipo_recibo="Compra")
         
-        def iterfile():
-            with open(filename, 'rb') as f:
-                yield from f
-            if os.path.exists(filename):
-                try:
-                    os.remove(filename)
-                except:
-                    pass
-
-        return StreamingResponse(
-            iterfile(),
-            media_type="application/pdf",
-            headers={"Content-Disposition": f"inline; filename=ticket_compra_{compra_id}.pdf"}
-        )
+        # Print directly
+        _try_print_file_windows(filename, copies=copies)
+        
+        return JSONResponse(content={"status": "success", "message": "Ticket guardado en Pesadas e impreso"})
 
     except Exception as e:
         # Log the error and raise an HTTPException
@@ -1114,17 +1118,7 @@ async def guardar_compra_pdf(compra_id: int, date: Optional[str] = None, current
     try:
         crear_pdf_recibo(datos, filename, tipo_recibo="Compra")
         
-        # Return the file as a download while keeping it on the server
-        def iterfile():
-            with open(filename, 'rb') as f:
-                yield from f
-            # Do NOT remove the file as we want to keep it on the server
-            
-        return StreamingResponse(
-            iterfile(),
-            media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename=ticket_compra_{compra_id}.pdf"}
-        )
+        return JSONResponse(content={"status": "success", "message": f"Ticket guardado en {filename}"})
 
     except Exception as e:
         # Log the error and raise an HTTPException
@@ -1484,24 +1478,18 @@ async def imprimir_venta_pdf(venta_id: int, copies: int = 2, date: Optional[str]
             raise HTTPException(status_code=500, detail=_format_save_error(e))
 
     try:
-        # Generate PDF
-        filename = os.path.join(tempfile.gettempdir(), f"recibo_venta_{venta_id}_{datetime.now().timestamp()}.pdf")
+        # Ensure pesadas directory exists
+        pesadas_dir = os.path.join(os.getcwd(), "pesadas")
+        os.makedirs(pesadas_dir, exist_ok=True)
+
+        # Generate PDF in pesadas folder
+        filename = os.path.join(pesadas_dir, f"ticket_venta_{venta_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
         crear_pdf_recibo(datos, filename, tipo_recibo="Venta")
         
-        def iterfile():
-            with open(filename, 'rb') as f:
-                yield from f
-            if os.path.exists(filename):
-                try:
-                    os.remove(filename)
-                except:
-                    pass
-
-        return StreamingResponse(
-            iterfile(),
-            media_type="application/pdf",
-            headers={"Content-Disposition": f"inline; filename=ticket_venta_{venta_id}.pdf"}
-        )
+        # Print directly
+        _try_print_file_windows(filename, copies=copies)
+        
+        return JSONResponse(content={"status": "success", "message": "Ticket guardado en Pesadas e impreso"})
 
     except Exception as e:
         # Log the error and raise an HTTPException
@@ -1577,17 +1565,7 @@ async def guardar_venta_pdf(venta_id: int, date: Optional[str] = None, current_u
     try:
         crear_pdf_recibo(datos, filename, tipo_recibo="Venta")
         
-        # Return the file as a download while keeping it on the server
-        def iterfile():
-            with open(filename, 'rb') as f:
-                yield from f
-            # Do NOT remove the file as we want to keep it on the server
-
-        return StreamingResponse(
-            iterfile(),
-            media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename=ticket_venta_{venta_id}.pdf"}
-        )
+        return JSONResponse(content={"status": "success", "message": f"Ticket guardado en {filename}"})
 
     except Exception as e:
         # Log the error and raise an HTTPException
