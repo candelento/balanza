@@ -512,19 +512,10 @@ def _try_print_file_windows(filepath: str, copies: int = 1):
     print(f"DEBUG: Sistema detectado para impresión: {system_name}")
 
     if system_name == "Linux":
-        try:
-            # Use lp command for CUPS on Linux
-            # lp -n <copies> <filename>
-            cmd = ["lp", "-n", str(copies), str(filepath)]
-            subprocess.run(cmd, check=True)
-            print(f"✓ Impreso usando lp ({copies} copias): {filepath}")
-            return
-        except FileNotFoundError:
-             raise Exception("Comando 'lp' no encontrado. Asegúrese de tener CUPS instalado y configurado en el servidor.")
-        except subprocess.CalledProcessError as e:
-             raise Exception(f"Error al ejecutar 'lp': {e}")
-        except Exception as e:
-             raise Exception(f"Error de impresión en Linux: {e}")
+        # On Linux remote servers, we don't try to print directly
+        # The PDF will be returned to the browser for client-side printing
+        print(f"✓ PDF preparado para descarga/visualización en Linux ({copies} copias solicitadas): {filepath}")
+        return
 
     elif system_name == "Windows":
         # Windows logic
@@ -672,6 +663,17 @@ async def websocket_endpoint(websocket: WebSocket):
             connected_clients.remove(websocket)
         print(f"Client removed. Total clients: {len(connected_clients)}")
 
+
+# --- System Configuration Endpoint ---
+@app.get("/api/system/config")
+async def get_system_config():
+    """Returns system configuration including OS type for frontend routing."""
+    import platform
+    os_type = platform.system().lower()  # 'windows', 'linux', 'darwin'
+    return {
+        "os_type": os_type,
+        "server_type": "local" if os_type == "windows" else "remote"
+    }
 
 # --- Product Catalog Endpoints ---
 @app.get("/api/productos/compras", response_model=List[str])
@@ -1037,16 +1039,37 @@ async def imprimir_compra_pdf(compra_id: int, copies: int = 2, date: Optional[st
 
         # Generate PDF in pesadas folder
         filename = os.path.join(pesadas_dir, f"ticket_compra_{compra_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
-        crear_pdf_recibo(datos, filename, tipo_recibo="Compra")
+        print(f"DEBUG: Generando PDF con {copies} copias para Compra {compra_id}")
+        crear_pdf_recibo(datos, filename, tipo_recibo="Compra", copies=copies)
+        print(f"DEBUG: PDF generado exitosamente: {filename}")
         
-        # Print directly
-        _try_print_file_windows(filename, copies=copies)
+        # On Windows, try to print directly
+        if platform.system() == "Windows":
+            print(f"DEBUG: Intentando imprimir archivo: {filename} con {copies} copias")
+            try:
+                _try_print_file_windows(filename, copies=copies)
+                print(f"DEBUG: Archivo enviado a impresora con {copies} copias")
+                return JSONResponse(content={"status": "success", "message": "Ticket guardado en Pesadas e impreso"})
+            except Exception as print_error:
+                print(f"WARN: Error al imprimir, devolviendo PDF: {print_error}")
         
-        return JSONResponse(content={"status": "success", "message": "Ticket guardado en Pesadas e impreso"})
+        # On Linux or if Windows printing failed, return PDF to browser
+        print(f"DEBUG: Devolviendo PDF al navegador para impresión manual ({copies} copias)")
+        return FileResponse(
+            path=filename,
+            media_type="application/pdf",
+            filename=f"ticket_compra_{compra_id}.pdf",
+            headers={
+                "X-Copies-Requested": str(copies),
+                "Content-Disposition": f"inline; filename=ticket_compra_{compra_id}.pdf"
+            }
+        )
 
     except Exception as e:
         # Log the error and raise an HTTPException
-        print(f"Error generating PDF for Compra {compra_id}: {e}")
+        print(f"ERROR generating/printing PDF for Compra {compra_id}: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generando PDF: {str(e)}")
 
 # Revert path parameter and type hint to int
@@ -1484,16 +1507,37 @@ async def imprimir_venta_pdf(venta_id: int, copies: int = 2, date: Optional[str]
 
         # Generate PDF in pesadas folder
         filename = os.path.join(pesadas_dir, f"ticket_venta_{venta_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
-        crear_pdf_recibo(datos, filename, tipo_recibo="Venta")
+        print(f"DEBUG: Generando PDF con {copies} copias para Venta {venta_id}")
+        crear_pdf_recibo(datos, filename, tipo_recibo="Venta", copies=copies)
+        print(f"DEBUG: PDF generado exitosamente: {filename}")
         
-        # Print directly
-        _try_print_file_windows(filename, copies=copies)
+        # On Windows, try to print directly
+        if platform.system() == "Windows":
+            print(f"DEBUG: Intentando imprimir archivo: {filename} con {copies} copias")
+            try:
+                _try_print_file_windows(filename, copies=copies)
+                print(f"DEBUG: Archivo enviado a impresora con {copies} copias")
+                return JSONResponse(content={"status": "success", "message": "Ticket guardado en Pesadas e impreso"})
+            except Exception as print_error:
+                print(f"WARN: Error al imprimir, devolviendo PDF: {print_error}")
         
-        return JSONResponse(content={"status": "success", "message": "Ticket guardado en Pesadas e impreso"})
+        # On Linux or if Windows printing failed, return PDF to browser
+        print(f"DEBUG: Devolviendo PDF al navegador para impresión manual ({copies} copias)")
+        return FileResponse(
+            path=filename,
+            media_type="application/pdf",
+            filename=f"ticket_venta_{venta_id}.pdf",
+            headers={
+                "X-Copies-Requested": str(copies),
+                "Content-Disposition": f"inline; filename=ticket_venta_{venta_id}.pdf"
+            }
+        )
 
     except Exception as e:
         # Log the error and raise an HTTPException
-        print(f"Error generating PDF for Venta {venta_id}: {e}")
+        print(f"ERROR generating/printing PDF for Venta {venta_id}: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generando PDF: {str(e)}")
 
 # Revert path parameter and type hint to int

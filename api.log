@@ -33558,3 +33558,144 @@ zipfile.BadZipFile: Truncated file header
 2025-12-05 14:47:42,649 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
 2025-12-05 14:47:42,708 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
 2025-12-05 14:47:42,708 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 14:52:31,619 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 14:52:31,714 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 14:52:31,715 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 14:54:32,171 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 14:54:32,224 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 14:54:32,225 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 14:55:57,792 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 14:55:57,843 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 14:55:57,845 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 14:59:57,364 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 14:59:57,413 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 14:59:57,414 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:01:02,016 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:01:02,070 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:01:02,070 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:01:19,336 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:01:19,487 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:01:19,488 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:01:21,615 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:01:21,674 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:01:21,674 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:02:01,547 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:02:01,594 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:02:01,595 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:02:30,846 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:02:30,930 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:02:30,931 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:06:25,552 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:06:25,615 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:06:25,616 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:07:12,893 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:07:12,952 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:07:12,952 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:07:41,352 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:07:41,408 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:07:41,409 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:08:12,494 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:08:12,573 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:08:12,574 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:08:22,005 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:08:22,046 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:08:22,047 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:08:36,206 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:08:36,291 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:08:36,291 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:09:01,780 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:09:01,849 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:09:01,849 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:11:33,755 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:11:33,848 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:11:33,848 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:12:08,631 - daily_excel_logger - INFO - Attempting to upsert data for ID: 1, Type: Compra
+2025-12-05 15:12:08,704 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:12:08,706 - daily_excel_logger - INFO - Updated row for ID 1 (Type: Compra) in sheet 2025-12-05
+2025-12-05 15:12:09,022 - daily_excel_logger - INFO - Workbook saved successfully: daily_log.xlsx
+2025-12-05 15:14:49,730 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:14:49,806 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:14:49,807 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:14:50,588 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:14:50,687 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:14:50,688 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:14:50,697 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:14:50,807 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:14:50,807 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:14:50,823 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:14:50,890 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:14:50,890 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:14:54,018 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:14:54,099 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:14:54,099 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:14:54,100 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:14:54,183 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:14:54,183 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:14:54,194 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:14:54,261 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:14:54,262 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:15:00,936 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:15:00,988 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:15:00,988 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-05 15:15:00,989 - daily_excel_logger - INFO - Attempting to upsert data for ID: 2, Type: Compra
+2025-12-05 15:15:01,059 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:15:01,059 - daily_excel_logger - INFO - Appended new row for ID 2 (Type: Compra) to sheet 2025-12-05
+2025-12-05 15:15:01,253 - daily_excel_logger - INFO - Workbook saved successfully: daily_log.xlsx
+2025-12-05 15:15:01,254 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:15:01,343 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:15:01,344 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries.
+2025-12-05 15:15:05,690 - daily_excel_logger - INFO - Attempting to upsert data for ID: 2, Type: Compra
+2025-12-05 15:15:05,760 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:15:05,763 - daily_excel_logger - INFO - Updated row for ID 2 (Type: Compra) in sheet 2025-12-05
+2025-12-05 15:15:05,943 - daily_excel_logger - INFO - Workbook saved successfully: daily_log.xlsx
+2025-12-05 15:15:05,944 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:15:06,023 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:15:06,024 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries.
+2025-12-05 15:15:08,316 - daily_excel_logger - INFO - Attempting to upsert data for ID: 2, Type: Compra
+2025-12-05 15:15:08,395 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:15:08,395 - daily_excel_logger - INFO - Updated row for ID 2 (Type: Compra) in sheet 2025-12-05
+2025-12-05 15:15:08,582 - daily_excel_logger - INFO - Workbook saved successfully: daily_log.xlsx
+2025-12-05 15:16:23,356 - daily_excel_logger - INFO - Attempting to upsert data for ID: 2, Type: Compra
+2025-12-05 15:16:23,448 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:16:23,543 - daily_excel_logger - INFO - Updated row for ID 2 (Type: Compra) in sheet 2025-12-05
+2025-12-05 15:16:23,862 - daily_excel_logger - INFO - Workbook saved successfully: daily_log.xlsx
+2025-12-05 15:16:59,190 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:16:59,256 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:16:59,257 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries.
+2025-12-05 15:17:00,107 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:17:00,218 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:17:00,219 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:17:00,220 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:17:00,304 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:17:00,305 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:17:00,319 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:17:00,403 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:17:00,404 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:17:27,259 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:17:27,310 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:17:27,311 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries.
+2025-12-05 15:17:29,775 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:17:29,824 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:17:29,825 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:32:14,805 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:32:14,869 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:32:14,869 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries.
+2025-12-05 15:32:15,837 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:32:15,974 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:32:15,975 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:32:15,992 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:32:16,105 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:32:16,114 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:32:16,115 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:32:16,261 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:32:16,262 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-05 15:32:18,334 - daily_excel_logger - INFO - Attempting to upsert data for ID: 2, Type: Compra
+2025-12-05 15:32:18,401 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:32:18,401 - daily_excel_logger - INFO - Updated row for ID 2 (Type: Compra) in sheet 2025-12-05
+2025-12-05 15:32:18,590 - daily_excel_logger - INFO - Workbook saved successfully: daily_log.xlsx
+2025-12-05 15:32:18,590 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-05 15:32:18,685 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:32:18,686 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries.
+2025-12-05 15:32:18,689 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
+2025-12-05 15:32:18,753 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-05 15:32:18,754 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.

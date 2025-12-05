@@ -105,10 +105,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY_TOKEN = 'accessToken'; // Key for storing JWT
     const CUTOFF_HOUR = 18; // Hour (0-23) after which data should be hidden
     
-    // Dynamic configuration for deployment
-    const API_BASE_URL = 'http://91.108.124.58:8001'; // VPS URL
-    // const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const WS_URL = 'ws://91.108.124.58:8001/ws'; // VPS WebSocket URL
+    // Dynamic configuration for deployment - pointing to remote server
+    let API_BASE_URL = 'http://91.108.124.58:8001'; // Remote VPS
+    let WS_URL = 'ws://91.108.124.58:8001/ws';
+    
+    console.log('✓ Using remote VPS server configuration');
 
     // --- Helper Functions ---
     function shouldShowData() {
@@ -1473,18 +1474,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(errorDetail);
             }
 
-            // Handle JSON response for direct printing/saving
-            const result = await response.json();
-            if (result.status === 'success') {
-                showToast(result.message || 'Ticket guardado en Pesadas e impreso.', 'success');
+            // Check if response is PDF or JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/pdf')) {
+                // PDF response - open in new window for printing
+                const copiesRequested = response.headers.get('X-Copies-Requested') || numCopies;
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                // Open PDF in new window
+                const printWindow = window.open(url, '_blank');
+                if (printWindow) {
+                    showToast(`PDF abierto en nueva ventana. Por favor imprima ${copiesRequested} copia(s).`, 'success', 5000);
+                } else {
+                    // If popup was blocked, trigger download
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ticket_${type}_${id}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showToast(`PDF descargado. Por favor imprima ${copiesRequested} copia(s).`, 'info', 5000);
+                }
+                
+                // Clean up the URL after a delay
+                setTimeout(() => window.URL.revokeObjectURL(url), 60000);
             } else {
-                // Fallback if status is not success but response was ok
-                showToast('Operación completada.', 'info');
-            }
-
-            // Cambiar el valor del selector de copias a 1
-            if (numCopiesSelect) {
-                numCopiesSelect.value = '1';
+                // JSON response for direct printing/saving
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showToast(result.message || 'Ticket guardado en Pesadas e impreso.', 'success');
+                } else {
+                    // Fallback if status is not success but response was ok
+                    showToast('Operación completada.', 'info');
+                }
             }
 
         } catch (error) {

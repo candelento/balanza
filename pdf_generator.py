@@ -246,7 +246,7 @@ def generar_planilla(datos: List[Dict[str, Any]], nombre_pdf: str) -> None:
         print(f"Error al generar la planilla: {e}")
         raise
 
-def crear_pdf_recibo(datos: List[Dict[str, Any]], nombre_pdf="ticket.pdf", tipo: Literal["ticket", "planilla"] = "ticket", tipo_recibo: str = ""):
+def crear_pdf_recibo(datos: List[Dict[str, Any]], nombre_pdf="ticket.pdf", tipo: Literal["ticket", "planilla"] = "ticket", tipo_recibo: str = "", copies: int = 1):
     if tipo == "planilla":
         return generar_planilla(datos, nombre_pdf)
 
@@ -357,237 +357,244 @@ def crear_pdf_recibo(datos: List[Dict[str, Any]], nombre_pdf="ticket.pdf", tipo:
     neto_fmt = formatear_numero(neto)
 
     # --- PDF Drawing ---
-    # Encabezado empresarial con banda, logo y títulos
-    header_top = height - margin
-    header_h = 22 * mm
-    header_bottom = header_top - header_h
-    c.setFillColor(colors.HexColor('#f2f5f7'))
-    c.setStrokeColor(colors.HexColor('#d9e1e6'))
-    c.setLineWidth(0.5)
-    c.rect(margin, header_bottom, width - 2*margin, header_h, fill=1, stroke=1)
+    def draw_page():
+        # Encabezado empresarial con banda, logo y títulos
+        header_top = height - margin
+        header_h = 22 * mm
+        header_bottom = header_top - header_h
+        c.setFillColor(colors.HexColor('#f2f5f7'))
+        c.setStrokeColor(colors.HexColor('#d9e1e6'))
+        c.setLineWidth(0.5)
+        c.rect(margin, header_bottom, width - 2*margin, header_h, fill=1, stroke=1)
 
-    # Logo
-    logo_drawn = False
-    logo_w = 18 * mm
-    logo_h = 18 * mm
-    logo_x = margin + 3 * mm
-    logo_y = header_bottom + (header_h - logo_h) / 2
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        candidatos_logo = [
-            os.path.join(base_dir, "static", "logo.png"),
-            os.path.join(base_dir, "logo.png"),
-        ]
-        logo_path = next((p for p in candidatos_logo if os.path.exists(p)), None)
-        if logo_path:
-            c.drawImage(logo_path, logo_x, logo_y, width=logo_w, height=logo_h, preserveAspectRatio=True, mask='auto')
-            logo_drawn = True
-        else:
-            print("Aviso: logo.png no encontrado en static/ ni en la raíz del proyecto.")
-    except Exception as e:
-        print(f"Aviso: No se pudo dibujar el logo: {e}")
-
-    # Títulos en encabezado
-    empresa = "Industrias Metalurgicas Ronanfer S.A."
-    subtitulo = "Ticket de Pesada" + (f" - {tipo_item}" if tipo_item else "")
-    text_left_x = logo_x + (logo_w + 4 * mm if logo_drawn else 4 * mm)
-    c.setFillColor(colors.black)
-    c.setFont(font_bold, font_size_company_title)
-    c.drawString(text_left_x, header_bottom + header_h - 8 * mm, empresa)
-    if subtitulo.strip():
-        c.setFont(font_regular, font_size_subtitle)
-        c.setFillColor(colors.black)
-        c.drawString(text_left_x, header_bottom + 5 * mm, subtitulo)
-
-    # Ticket y fecha en el extremo derecho del header
-    c.setFont(font_regular, 9)
-    c.setFillColor(colors.black)
-    ticket_id = str(data.get("id", "-"))
-    fecha_hdr = fecha
-    right_block_x = width - margin - 60 * mm
-    c.drawRightString(width - margin - 2 * mm, header_bottom + header_h - 7 * mm, f"Ticket N° {ticket_id}")
-    c.setFillColor(colors.black)
-
-    # Posición inicial de contenido y color negro por defecto
-    y_pos = header_bottom - section_space * 2
-    c.setFillColor(colors.black)
-
-    # --- Details Section (Two Columns) ---
-    c.setFont(font_name, font_size_normal)
-
-    # Row 1: Fecha / Proveedor/Cliente (part 1)
-    c.drawString(col1_x, y_pos, "Fecha:")
-    c.setFont(font_bold, font_size_normal)
-    c.drawString(col1_x + value_offset, y_pos, fecha)
-    c.setFont(font_name, font_size_normal)
-    # Change label based on tipo
-    label_proveedor_cliente = "Cliente:" if tipo_item == "Venta" else "Proveedor:"
-    c.drawString(col2_x, y_pos, label_proveedor_cliente)
-    # Use Paragraph for potentially long provider names, append incoterm if provided (Ventas)
-    styleN.fontName = font_bold
-    try:
-        proveedor_txt = proveedor
-        if tipo_item == "Venta" and incoterm:
-            proveedor_txt = f"{proveedor} - {incoterm}"
-    except Exception:
-        proveedor_txt = proveedor
-    p = Paragraph(proveedor_txt, styleN)
-    p.wrapOn(c, width - col2_x - value_offset - margin, line_height)
-    p_height = p.height
-    p.drawOn(c, col2_x + value_offset, y_pos - (p_height - line_height)/2 ) # Adjust Y slightly for alignment
-    styleN.fontName = font_name
-
-    y_pos -= max(line_height, p_height) + section_space # Move down by the taller element
-    
-    # Row 2: Material
-    c.drawString(col1_x, y_pos, "Material:")
-    styleN.fontName = font_bold
-    p = Paragraph(mercaderia or "", styleN)
-    p.wrapOn(c, width - col1_x - value_offset - margin, line_height)
-    p_height = p.height
-    p.drawOn(c, col1_x + value_offset, y_pos - (p_height - line_height)/2)
-    styleN.fontName = font_name
-
-    y_pos -= max(line_height, p_height) + section_space
-    
-    # Row 3: Chofer/Transporte / Patente
-    c.drawString(col1_x, y_pos, "Chofer/Transp.:")
-    c.setFont(font_bold, font_size_normal)
-    # Use 'transporte' para Venta, 'chofer' para Compra
-    display_chofer_transporte = (transporte if tipo_item == "Venta" else chofer) or ""
-    c.drawString(col1_x + value_offset, y_pos, display_chofer_transporte)
-    c.setFont(font_name, font_size_normal)
-    c.drawString(col2_x, y_pos, "Patente:")
-    c.setFont(font_bold, font_size_normal)
-    c.drawString(col2_x + value_offset, y_pos, patente or "")
-    c.setFont(font_name, font_size_normal)
-
-    y_pos -= line_height + section_space
-
-    # --- Separator Line ---
-    c.setStrokeColor(colors.black)
-    c.line(margin, y_pos, width - margin, y_pos)
-    y_pos -= section_space * 2
-    c.setStrokeColor(colors.black)
-
-    # --- Weights and Times Section (Two Columns) ---
-    c.setFont(font_name, font_size_normal)
-
-    # (quitado) Recuadro de "Pesos y Tiempos" para un estilo más limpio
-    # Mantener colores en negro para el texto
-    c.setStrokeColor(colors.black)
-    c.setFillColor(colors.black)
-
-    # Bruto / Hora Ingreso
-    c.drawString(col1_x, y_pos, "Peso Bruto:")
-    c.setFont(font_bold, font_size_normal)
-    c.drawRightString(col1_x + right_align_offset, y_pos, bruto_fmt)
-    c.drawString(col1_x + kgs_offset, y_pos, "Kgs")
-    c.setFont(font_name, font_size_normal)
-    c.drawString(col2_x, y_pos, "Hora Ingreso:")
-    c.setFont(font_bold, font_size_normal)
-    c.drawString(col2_x + value_offset, y_pos, hora_ingreso)
-    c.setFont(font_name, font_size_normal)
-    y_pos -= line_height
-
-    # Tara / Hora Salida
-    c.drawString(col1_x, y_pos, "Peso Tara:")
-    c.setFont(font_bold, font_size_normal)
-    c.drawRightString(col1_x + right_align_offset, y_pos, tara_fmt)
-    c.drawString(col1_x + kgs_offset, y_pos, "Kgs")
-    c.setFont(font_name, font_size_normal)
-    c.drawString(col2_x, y_pos, "Hora Salida:")
-    c.setFont(font_bold, font_size_normal)
-    c.drawString(col2_x + value_offset, y_pos, hora_salida)
-    c.setFont(font_name, font_size_normal) # Reset font for label
-    y_pos -= line_height
-
-    # Merma
-    c.drawString(col1_x, y_pos, "Merma:")
-    c.setFont(font_bold, font_size_normal)
-    c.drawRightString(col1_x + right_align_offset, y_pos, merma_fmt)
-    c.drawString(col1_x + kgs_offset, y_pos, "Kgs")
-    c.setFont(font_name, font_size_normal) # Reset font for label
-    y_pos -= line_height
-
-    # Precio x Kg / Importe
-    c.drawString(col1_x, y_pos, "Precio x Kg:")
-    c.setFont(font_bold, font_size_normal)
-    precio_display = f"$ {formatear_numero(precio_kg)}" if precio_kg else "$"
-    c.drawRightString(col1_x + right_align_offset, y_pos, precio_display)
-    c.setFont(font_name, font_size_normal)
-    c.drawString(col2_x, y_pos, "Importe:")
-    c.setFont(font_bold, font_size_normal)
-    # Formato moneda más profesional: $ 12.345,67
-    def formatear_moneda(valor):
+        # Logo
+        logo_drawn = False
+        logo_w = 18 * mm
+        logo_h = 18 * mm
+        logo_x = margin + 3 * mm
+        logo_y = header_bottom + (header_h - logo_h) / 2
         try:
-            if valor is None or str(valor).strip() == "":
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            candidatos_logo = [
+                os.path.join(base_dir, "static", "logo.png"),
+                os.path.join(base_dir, "logo.png"),
+            ]
+            logo_path = next((p for p in candidatos_logo if os.path.exists(p)), None)
+            if logo_path:
+                c.drawImage(logo_path, logo_x, logo_y, width=logo_w, height=logo_h, preserveAspectRatio=True, mask='auto')
+                logo_drawn = True
+            else:
+                print("Aviso: logo.png no encontrado en static/ ni en la raíz del proyecto.")
+        except Exception as e:
+            print(f"Aviso: No se pudo dibujar el logo: {e}")
+
+        # Títulos en encabezado
+        empresa = "Industrias Metalurgicas Ronanfer S.A."
+        subtitulo = "Ticket de Pesada" + (f" - {tipo_item}" if tipo_item else "")
+        text_left_x = logo_x + (logo_w + 4 * mm if logo_drawn else 4 * mm)
+        c.setFillColor(colors.black)
+        c.setFont(font_bold, font_size_company_title)
+        c.drawString(text_left_x, header_bottom + header_h - 8 * mm, empresa)
+        if subtitulo.strip():
+            c.setFont(font_regular, font_size_subtitle)
+            c.setFillColor(colors.black)
+            c.drawString(text_left_x, header_bottom + 5 * mm, subtitulo)
+
+        # Ticket y fecha en el extremo derecho del header
+        c.setFont(font_regular, 9)
+        c.setFillColor(colors.black)
+        ticket_id = str(data.get("id", "-"))
+        fecha_hdr = fecha
+        right_block_x = width - margin - 60 * mm
+        c.drawRightString(width - margin - 2 * mm, header_bottom + header_h - 7 * mm, f"Ticket N° {ticket_id}")
+        c.setFillColor(colors.black)
+
+        # Posición inicial de contenido y color negro por defecto
+        y_pos = header_bottom - section_space * 2
+        c.setFillColor(colors.black)
+
+        # --- Details Section (Two Columns) ---
+        c.setFont(font_name, font_size_normal)
+
+        # Row 1: Fecha / Proveedor/Cliente (part 1)
+        c.drawString(col1_x, y_pos, "Fecha:")
+        c.setFont(font_bold, font_size_normal)
+        c.drawString(col1_x + value_offset, y_pos, fecha)
+        c.setFont(font_name, font_size_normal)
+        # Change label based on tipo
+        label_proveedor_cliente = "Cliente:" if tipo_item == "Venta" else "Proveedor:"
+        c.drawString(col2_x, y_pos, label_proveedor_cliente)
+        # Use Paragraph for potentially long provider names, append incoterm if provided (Ventas)
+        styleN.fontName = font_bold
+        try:
+            proveedor_txt = proveedor
+            if tipo_item == "Venta" and incoterm:
+                proveedor_txt = f"{proveedor} - {incoterm}"
+        except Exception:
+            proveedor_txt = proveedor
+        p = Paragraph(proveedor_txt, styleN)
+        p.wrapOn(c, width - col2_x - value_offset - margin, line_height)
+        p_height = p.height
+        p.drawOn(c, col2_x + value_offset, y_pos - (p_height - line_height)/2 ) # Adjust Y slightly for alignment
+        styleN.fontName = font_name
+
+        y_pos -= max(line_height, p_height) + section_space # Move down by the taller element
+        
+        # Row 2: Material
+        c.drawString(col1_x, y_pos, "Material:")
+        styleN.fontName = font_bold
+        p = Paragraph(mercaderia or "", styleN)
+        p.wrapOn(c, width - col1_x - value_offset - margin, line_height)
+        p_height = p.height
+        p.drawOn(c, col1_x + value_offset, y_pos - (p_height - line_height)/2)
+        styleN.fontName = font_name
+
+        y_pos -= max(line_height, p_height) + section_space
+        
+        # Row 3: Chofer/Transporte / Patente
+        c.drawString(col1_x, y_pos, "Chofer/Transp.:")
+        c.setFont(font_bold, font_size_normal)
+        # Use 'transporte' para Venta, 'chofer' para Compra
+        display_chofer_transporte = (transporte if tipo_item == "Venta" else chofer) or ""
+        c.drawString(col1_x + value_offset, y_pos, display_chofer_transporte)
+        c.setFont(font_name, font_size_normal)
+        c.drawString(col2_x, y_pos, "Patente:")
+        c.setFont(font_bold, font_size_normal)
+        c.drawString(col2_x + value_offset, y_pos, patente or "")
+        c.setFont(font_name, font_size_normal)
+
+        y_pos -= line_height + section_space
+
+        # --- Separator Line ---
+        c.setStrokeColor(colors.black)
+        c.line(margin, y_pos, width - margin, y_pos)
+        y_pos -= section_space * 2
+        c.setStrokeColor(colors.black)
+
+        # --- Weights and Times Section (Two Columns) ---
+        c.setFont(font_name, font_size_normal)
+
+        # (quitado) Recuadro de "Pesos y Tiempos" para un estilo más limpio
+        # Mantener colores en negro para el texto
+        c.setStrokeColor(colors.black)
+        c.setFillColor(colors.black)
+
+        # Bruto / Hora Ingreso
+        c.drawString(col1_x, y_pos, "Peso Bruto:")
+        c.setFont(font_bold, font_size_normal)
+        c.drawRightString(col1_x + right_align_offset, y_pos, bruto_fmt)
+        c.drawString(col1_x + kgs_offset, y_pos, "Kgs")
+        c.setFont(font_name, font_size_normal)
+        c.drawString(col2_x, y_pos, "Hora Ingreso:")
+        c.setFont(font_bold, font_size_normal)
+        c.drawString(col2_x + value_offset, y_pos, hora_ingreso)
+        c.setFont(font_name, font_size_normal)
+        y_pos -= line_height
+
+        # Tara / Hora Salida
+        c.drawString(col1_x, y_pos, "Peso Tara:")
+        c.setFont(font_bold, font_size_normal)
+        c.drawRightString(col1_x + right_align_offset, y_pos, tara_fmt)
+        c.drawString(col1_x + kgs_offset, y_pos, "Kgs")
+        c.setFont(font_name, font_size_normal)
+        c.drawString(col2_x, y_pos, "Hora Salida:")
+        c.setFont(font_bold, font_size_normal)
+        c.drawString(col2_x + value_offset, y_pos, hora_salida)
+        c.setFont(font_name, font_size_normal) # Reset font for label
+        y_pos -= line_height
+
+        # Merma
+        c.drawString(col1_x, y_pos, "Merma:")
+        c.setFont(font_bold, font_size_normal)
+        c.drawRightString(col1_x + right_align_offset, y_pos, merma_fmt)
+        c.drawString(col1_x + kgs_offset, y_pos, "Kgs")
+        c.setFont(font_name, font_size_normal) # Reset font for label
+        y_pos -= line_height
+
+        # Precio x Kg / Importe
+        c.drawString(col1_x, y_pos, "Precio x Kg:")
+        c.setFont(font_bold, font_size_normal)
+        precio_display = f"$ {formatear_numero(precio_kg)}" if precio_kg else "$"
+        c.drawRightString(col1_x + right_align_offset, y_pos, precio_display)
+        c.setFont(font_name, font_size_normal)
+        c.drawString(col2_x, y_pos, "Importe:")
+        c.setFont(font_bold, font_size_normal)
+        # Formato moneda más profesional: $ 12.345,67
+        def formatear_moneda(valor):
+            try:
+                if valor is None or str(valor).strip() == "":
+                    return "$"
+                num = float(valor)
+                entero, dec = divmod(round(num * 100), 100)
+                entero_fmt = "{:,}".format(int(entero)).replace(",", ".")
+                return f"$ {entero_fmt},{int(dec):02d}"
+            except (ValueError, TypeError):
                 return "$"
-            num = float(valor)
-            entero, dec = divmod(round(num * 100), 100)
-            entero_fmt = "{:,}".format(int(entero)).replace(",", ".")
-            return f"$ {entero_fmt},{int(dec):02d}"
-        except (ValueError, TypeError):
-            return "$"
 
-    importe_display = formatear_moneda(importe) if importe else "$"
-    c.drawString(col2_x + value_offset, y_pos, importe_display)
-    c.setFont(font_name, font_size_normal) # Reset font for label
-    y_pos -= line_height * 1 # Extra space before Neto
+        importe_display = formatear_moneda(importe) if importe else "$"
+        c.drawString(col2_x + value_offset, y_pos, importe_display)
+        c.setFont(font_name, font_size_normal) # Reset font for label
+        y_pos -= line_height * 1 # Extra space before Neto
 
-    # --- Separator Line ---
-    c.setStrokeColor(colors.HexColor('#d9e1e6'))
-    c.line(margin, y_pos, width - margin, y_pos)
-    y_pos -= section_space
-    c.setStrokeColor(colors.black)
+        # --- Separator Line ---
+        c.setStrokeColor(colors.HexColor('#d9e1e6'))
+        c.line(margin, y_pos, width - margin, y_pos)
+        y_pos -= section_space
+        c.setStrokeColor(colors.black)
 
-    # --- Neto Section (Highlighted) ---
-    font_size_neto = 13
-    neto_box_height = font_size_neto * 1.5 # Increased box height
-    neto_box_width = width - 2 * margin
-    neto_box_y = y_pos - neto_box_height - section_space
+        # --- Neto Section (Highlighted) ---
+        font_size_neto = 13
+        neto_box_height = font_size_neto * 1.5 # Increased box height
+        neto_box_width = width - 2 * margin
+        neto_box_y = y_pos - neto_box_height - section_space
 
-    # Draw the box
-    c.setLineWidth(1.5)
-    c.setStrokeColor(colors.black)
-    c.setFillColor(colors.white)
-    try:
-        c.roundRect(margin, neto_box_y, neto_box_width, neto_box_height, 6, stroke=1, fill=1)
-    except Exception:
-        c.rect(margin, neto_box_y, neto_box_width, neto_box_height, stroke=1, fill=1)
+        # Draw the box
+        c.setLineWidth(1.5)
+        c.setStrokeColor(colors.black)
+        c.setFillColor(colors.white)
+        try:
+            c.roundRect(margin, neto_box_y, neto_box_width, neto_box_height, 6, stroke=1, fill=1)
+        except Exception:
+            c.rect(margin, neto_box_y, neto_box_width, neto_box_height, stroke=1, fill=1)
 
-    # Prepare text
-    neto_text = f" Neto:    {neto_fmt} Kgs"
+        # Prepare text
+        neto_text = f" Neto:    {neto_fmt} Kgs"
 
-    # Set font for calculating width
-    c.setFont(font_bold, font_size_neto)
-    c.setFillColor(colors.black)
+        # Set font for calculating width
+        c.setFont(font_bold, font_size_neto)
+        c.setFillColor(colors.black)
 
-    # Calculate text width to center it
-    text_width = c.stringWidth(neto_text, font_bold, font_size_neto)
-    
-    # Calculate positions
-    text_x = margin + (neto_box_width - text_width) / 2
-    text_y = neto_box_y + (neto_box_height - font_size_neto) / 2 + (font_size_neto * 0.1) # Adjust for better vertical centering
+        # Calculate text width to center it
+        text_width = c.stringWidth(neto_text, font_bold, font_size_neto)
+        
+        # Calculate positions
+        text_x = margin + (neto_box_width - text_width) / 2
+        text_y = neto_box_y + (neto_box_height - font_size_neto) / 2 + (font_size_neto * 0.1) # Adjust for better vertical centering
 
-    # Draw the centered text
-    c.drawString(text_x, text_y, neto_text)
+        # Draw the centered text
+        c.drawString(text_x, text_y, neto_text)
 
-    y_pos = neto_box_y - section_space * 1.5 # Update y_pos below the box
-    c.setFont(font_name, font_size_normal) # Reset font to normal for subsequent text
+        y_pos = neto_box_y - section_space * 1.5 # Update y_pos below the box
+        c.setFont(font_name, font_size_normal) # Reset font to normal for subsequent text
 
-    # --- Footer ---
-    c.setLineWidth(0.5)
-    c.setStrokeColor(colors.HexColor("#000000"))
-    c.line(margin, y_pos, width - margin, y_pos)
-    c.setFont(font_regular, 8)
-    c.setFillColor(colors.black)
-    footer_text = f"I.M.R. Sistema de Pesada • Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-    c.drawCentredString(width/2.0, y_pos - 3 * mm, footer_text)
+        # --- Footer ---
+        c.setLineWidth(0.5)
+        c.setStrokeColor(colors.HexColor("#000000"))
+        c.line(margin, y_pos, width - margin, y_pos)
+        c.setFont(font_regular, 8)
+        c.setFillColor(colors.black)
+        footer_text = f"I.M.R. Sistema de Pesada • Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        c.drawCentredString(width/2.0, y_pos - 3 * mm, footer_text)
+
+    # Generate pages for copies
+    for i in range(copies):
+        draw_page()
+        if i < copies - 1:
+            c.showPage()
 
     # --- Save PDF ---
     c.save()
-    print(f"PDF '{nombre_pdf}' generado con nuevo formato.")
+    print(f"PDF '{nombre_pdf}' generado con {copies} página(s).")
 
 # Example Usage (for testing if run directly)
 if __name__ == '__main__':
