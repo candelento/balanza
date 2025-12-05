@@ -1,0 +1,18 @@
+{
+    "admin": {
+        "password": "ronan1",
+        "role": "admin"
+    },
+    "admin2": {
+        "password": "ronan2",
+        "role": "lect"
+    },
+    "admin3": {
+        "password": "ronan3",
+        "role": "lect"
+    },
+    "admin4": {
+        "password": "ronan4",
+        "role": "lect"
+    }
+}

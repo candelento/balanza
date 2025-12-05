@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Pesaje</title>
+    <link rel="icon" href="logo.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" integrity="sha512-UXumZrZNiOwnTcZSHs1hBECgM3SMlhpO0uUDruCVlW+MFLXXGSLJSdpEyHITeYIgu8hEMZEut6nwzGNab/JCOw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="logo.png" alt="Logo">
+            </div>
+            <h1 class="main-title">Sistema de Pesaje</h1>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round">
+                        <span class="icon-moon"><i class="fas fa-moon"></i></span>
+                        <span class="icon-sun"><i class="fas fa-sun"></i></span>
+                    </div>
+                </label>
+            </div>
+            <button id="logoutBtn" class="btn-secondary" style="display: none;"><i class="fas fa-door-open"></i> Salir</button>
+        </header>
+
+        <div id="login-container" class="card" aria-live="polite">
+            <h2>Iniciar sesión</h2>
+            <form id="login-form" aria-label="Formulario de inicio de sesión">
+                <div class="form-group">
+                    <label for="username"><i class="fas fa-user"></i> Usuario</label>
+                    <input type="text" id="username" placeholder="Ingrese su usuario" required aria-required="true" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> Contraseña</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" placeholder="Ingrese su contraseña" required aria-required="true" autocomplete="off">
+                        <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" aria-controls="password" title="Mostrar contraseña (mantener para ver)">
+                            <i class="fas fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Ingresar</button>
+                <p id="login-error" class="error-message" role="status" aria-live="assertive"></p>
+            </form>
+        </div>
+
+        <div id="app-content" style="display: none;">
+            <main>
+                <!-- Print, View, and Download Buttons Section -->
+                <section class="print-section">
+                    <div class="button-group">
+                        <button id="printTodoBtn" class="btn-secondary top-action"><i class="fas fa-print"></i> Imprimir Planilla </button>
+                        <button id="viewTodoBtn" class="btn-secondary top-action"><i class="fas fa-eye"></i> Ver Plantilla </button>
+                        <button id="downloadPlanillaBtn" class="btn-secondary top-action"><i class="fas fa-save"></i> Guardar Planilla</button>
+                        <button id="backupBtn" class="btn-secondary top-action btn-critical"><i class="fas fa-cloud-arrow-down"></i> Realizar Backup</button>
+                    </div>
+                </section>
+
+                <!-- Tab Navigation -->
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="compras">Compras</button>
+                    <button class="tab-button" data-tab="ventas">Ventas</button>
+                    <button class="tab-button" data-tab="dashboard">Dashboard</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="compras-content" class="tab-content active">
+                    <section class="filter-section">
+                        <form id="compras-filter-form">
+                            <div class="form-group">
+                                <label for="compras-search">Buscar:</label>
+                                <input type="text" id="compras-search" placeholder="Proveedor, mercadería, etc." autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label class="date-range-label">Rango de fechas:</label>
+                                <div class="date-range">
+                                    <div class="date-input">
+                                        <label for="compras-date-start" class="date-icon-btn" title="Abrir calendario" aria-label="Abrir calendario">
+                                            <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                                                <rect x="3" y="5" width="18" height="16" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="3" x2="16" y2="7"></line>
+                                                <line x1="8" y1="3" x2="8" y2="7"></line>
+                                                <line x1="3" y1="11" x2="21" y2="11"></line>
+                                            </svg>
+                                        </label>
+                                        <input type="date" id="compras-date-start" class="date-picker" autocomplete="off" inputmode="none" required>
+                                    </div>
+                                    <span class="date-separator" aria-hidden="true">—</span>
+                                    <div class="date-input">
+                                        <label for="compras-date-end" class="date-icon-btn" title="Abrir calendario" aria-label="Abrir calendario">
+                                            <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                                                <rect x="3" y="5" width="18" height="16" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="3" x2="16" y2="7"></line>
+                                                <line x1="8" y1="3" x2="8" y2="7"></line>
+                                                <line x1="3" y1="11" x2="21" y2="11"></line>
+                                            </svg>
+                                        </label>
+                                        <input type="date" id="compras-date-end" class="date-picker" autocomplete="off" inputmode="none" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="submit" class="btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+                                <button type="reset" class="btn-secondary"><i class="fas fa-times"></i> Limpiar</button>
+                                    <button id="downloadTodoPlanillaBtn" type="button" class="btn-secondary" title="Descargar planilla combinada"><i class="fas fa-file-download"></i> Descarga</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="table-section">
+                        <div class="table-header">
+                            <button id="addCompraBtn" class="btn-primary btn-add btn-add-compra" aria-label="Nueva compra">
+                                <i class="fas fa-plus"></i> Nueva Compra
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <!-- Botones flotantes fuera del área scrollable -->
+                            <button id="comprasScrollLeft" class="floating-arrow left" title="Desplazar a la izquierda"><i class="fas fa-chevron-left"></i></button>
+                            <button id="comprasScrollRight" class="floating-arrow right" title="Desplazar a la derecha"><i class="fas fa-chevron-right"></i></button>
+                            <div class="scroll-arrows-container">
+                                <span class="scroll-arrow left"><i class="fas fa-chevron-left"></i></span>
+                                <div class="table-wrapper">
+                                    <table id="comprasTable">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                            <th>Fecha</th>
+                                            <th>Proveedor</th>
+                                            <th>Mercadería</th>
+                                            <th>Bruto (kg)</th>
+                                            <th>Tara (kg)</th>
+                                            <th>Merma (kg)</th>
+                                            <th>Neto (kg)</th>
+                                            <th>Chofer</th>
+                                            <th>Patente</th>
+                                            <th>Hora Entrada</th>
+                                            <th>Hora Salida</th>
+                                                <th>Acciones</th>
+                                                <th>Observaciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="comprasTableBody">
+                                            <!-- Rows for Compras will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <span class="scroll-arrow right"><i class="fas fa-chevron-right"></i></span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div id="ventas-content" class="tab-content">
+                    <section class="filter-section">
+                        <form id="ventas-filter-form">
+                            <div class="form-group">
+                                <label for="ventas-search">Buscar:</label>
+                                <input type="text" id="ventas-search" placeholder="Cliente, mercadería, etc." autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label class="date-range-label">Rango de fechas:</label>
+                                <div class="date-range">
+                                    <div class="date-input">
+                                        <label for="ventas-date-start" class="date-icon-btn" title="Abrir calendario" aria-label="Abrir calendario">
+                                            <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                                                <rect x="3" y="5" width="18" height="16" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="3" x2="16" y2="7"></line>
+                                                <line x1="8" y1="3" x2="8" y2="7"></line>
+                                                <line x1="3" y1="11" x2="21" y2="11"></line>
+                                            </svg>
+                                        </label>
+                                        <input type="date" id="ventas-date-start" class="date-picker" autocomplete="off" inputmode="none" required>
+                                    </div>
+                                    <span class="date-separator" aria-hidden="true">—</span>
+                                    <div class="date-input">
+                                        <label for="ventas-date-end" class="date-icon-btn" title="Abrir calendario" aria-label="Abrir calendario">
+                                            <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                                                <rect x="3" y="5" width="18" height="16" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="3" x2="16" y2="7"></line>
+                                                <line x1="8" y1="3" x2="8" y2="7"></line>
+                                                <line x1="3" y1="11" x2="21" y2="11"></line>
+                                            </svg>
+                                        </label>
+                                        <input type="date" id="ventas-date-end" class="date-picker" autocomplete="off" inputmode="none" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="submit" class="btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+                                <button type="reset" class="btn-secondary"><i class="fas fa-times"></i> Limpiar</button>
+                                <button id="downloadVentasPlanillaBtn" type="button" class="btn-secondary" title="Descargar planilla combinada"><i class="fas fa-file-download"></i> Descarga</button>
+                            </div>
+                        </form>
+                    </section>
+                     <section class="table-section">
+                        <div class="table-header">
+                            <button id="addVentaBtn" class="btn-primary btn-add btn-add-venta" aria-label="Nueva venta">
+                                <i class="fas fa-plus"></i> Nueva Venta
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <!-- Botones flotantes fuera del área scrollable -->
+                            <button id="ventasScrollLeft" class="floating-arrow left" title="Desplazar a la izquierda"><i class="fas fa-chevron-left"></i></button>
+                            <button id="ventasScrollRight" class="floating-arrow right" title="Desplazar a la derecha"><i class="fas fa-chevron-right"></i></button>
+                            <div class="scroll-arrows-container">
+                                <span class="scroll-arrow left"><i class="fas fa-chevron-left"></i></span>
+                                <div class="table-wrapper">
+                                    <table id="ventasTable">
+                                         <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                            <th>Fecha</th>
+                                            <th>Cliente</th>
+                                            <th>Mercadería</th>
+                                            <th>Bruto (kg)</th>
+                                            <th>Tara (kg)</th>
+                                            <th>Merma (kg)</th>
+                                            <th>Neto (kg)</th>
+                                            <th>Transporte</th>
+                                            <th>Patente</th>
+                                            <th>Hora Entrada</th>
+                                            <th>Hora Salida</th>
+                                                <th>Acciones</th>
+                                                <th>Remito</th>
+                                                <th>Observaciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="ventasTableBody">
+                                            <!-- Rows for Ventas will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <span class="scroll-arrow right"><i class="fas fa-chevron-right"></i></span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div id="dashboard-content" class="tab-content">
+                    <section class="dashboard-controls dashboard-date-elegant">
+                        <div class="dashboard-date-wrapper">
+                            <div class="dashboard-date-group">
+                                <label for="dashboard-date-start" class="dashboard-date-label"><i class="fas fa-calendar-day"></i> Inicio</label>
+                                <input type="date" id="dashboard-date-start" class="dashboard-date-input">
+                            </div>
+                            <span class="dashboard-date-separator">—</span>
+                            <div class="dashboard-date-group">
+                                <label for="dashboard-date-end" class="dashboard-date-label"><i class="fas fa-calendar-day"></i> Fin</label>
+                                <input type="date" id="dashboard-date-end" class="dashboard-date-input">
+                            </div>
+                            <!-- Botón de actualizar como icono, al lado de las fechas -->
+                            <button id="update-dashboard" class="dashboard-date-btn icon-only" title="Actualizar" aria-label="Actualizar">
+                                <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="date-presets" aria-label="Atajos de fechas">
+                            <button type="button" class="preset-chip" data-preset="today">Hoy</button>
+                            <button type="button" class="preset-chip" data-preset="yesterday">Ayer</button>
+                            <button type="button" class="preset-chip" data-preset="last7">Últimos 7 días</button>
+                            <button type="button" class="preset-chip" data-preset="thisMonth">Este mes</button>
+                            <button type="button" class="preset-chip" data-preset="lastMonth">Mes pasado</button>
+                        </div>
+                    </section>
+                    <!-- KPI Cards: métricas principales -->
+                    <section class="dashboard-kpis" id="dashboard-kpis">
+                        <div class="kpi-card card-compras">
+                            <h3>Compras (kg)</h3>
+                            <p id="kpi-compras">0</p>
+                        </div>
+                        <div class="kpi-card card-ventas">
+                            <h3>Ventas (kg)</h3>
+                            <p id="kpi-ventas">0</p>
+                        </div>
+                        <div class="kpi-card card-balance">
+                            <h3>Balance neto</h3>
+                            <p id="kpi-balance">0</p>
+                        </div>
+                        <div class="kpi-card card-balance">
+                            <h3>Top producto</h3>
+                            <p id="kpi-top-producto">-</p>
+                        </div>
+                    </section>
+                    <!-- Personalización: elegir qué gráficos ver -->
+                    <section class="dashboard-settings" aria-label="Preferencias de visualización del dashboard">
+                        <div class="settings-group">
+                            <label><input type="checkbox" id="toggle-entries" checked> Entradas vs Salidas</label>
+                            <label><input type="checkbox" id="toggle-5days" checked> Últimos 5 días</label>
+                            <label><input type="checkbox" id="toggle-ranking" checked> Ranking de productos</label>
+                            <label><input type="checkbox" id="toggle-lastmoves" checked> Últimos movimientos</label>
+                        </div>
+                        <button id="reset-dashboard" class="btn-secondary btn-small" type="button"><i class="fas fa-undo"></i> Reset</button>
+                    </section>
+                    <div class="dashboard-grid">
+                        <div class="chart-container" id="section-entries">
+                            <h3>Entradas y Salidas</h3>
+                            <canvas id="entriesExitsChart"></canvas>
+                        </div>
+                        <div class="chart-container card-5days" id="section-5days">
+                            <h3><i class="fas fa-chart-line" aria-hidden="true"></i> Balance últimos 5 días</h3>
+                            <canvas id="last5DaysBalanceChart"></canvas>
+                            <div id="avg-5days-text" class="avg-5days-text" aria-live="polite"></div>
+                        </div>
+                        <div class="chart-container" id="section-last-moves">
+                            <h3>Últimos movimientos</h3>
+                            <ul id="last-moves-list" class="last-moves-list" aria-live="polite"></ul>
+                        </div>
+                        <div class="chart-container-full" id="section-ranking">
+                            <h3>Ranking de productos (Compras)</h3>
+                            <canvas id="materialTypesChart"></canvas>
+                            <!-- Controles ligeros para vista del gráfico de materiales -->
+                            <div class="material-controls">
+                                <div class="material-chips">
+                                    <button type="button" class="preset-chip" data-top="5">Top 5</button>
+                                    <button type="button" class="preset-chip active" data-top="10">Top 10</button>
+                                    <button type="button" class="preset-chip" data-top="all">Todos</button>
+                                    <span class="chip-sep" aria-hidden="true"></span>
+                                </div>
+                                <div id="material-total" class="material-total" aria-live="polite"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Establecer la fecha actual por defecto en los inputs del dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const currentDate = `${yyyy}-${mm}-${dd}`;
+            const startInput = document.getElementById('dashboard-date-start');
+            const endInput = document.getElementById('dashboard-date-end');
+            if (startInput) startInput.value = currentDate;
+            if (endInput) endInput.value = currentDate;
+
+            // Abrir el calendario al hacer clic en el ícono junto a las fechas (Compras/Ventas)
+            const iconLabels = document.querySelectorAll('.date-range .date-icon-btn');
+            iconLabels.forEach((label) => {
+                label.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const forId = label.getAttribute('for');
+                    if (!forId) return;
+                    const input = document.getElementById(forId);
+                    if (!input) return;
+                    try {
+                        if (typeof input.showPicker === 'function') {
+                            input.showPicker();
+                        } else {
+                            input.focus();
+                            input.click();
+                        }
+                    } catch (_) {
+                        input.focus();
+                        input.click();
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

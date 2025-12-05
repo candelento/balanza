@@ -1,0 +1,2983 @@
+:root {
+    /* Paleta basada en #495f5b y #3c4443 (gama clara) */
+    --primary-color: #495f5b;       /* Verde grisáceo profundo */
+    --primary-variant: #3c4443;     /* Variante más oscura */
+    --secondary-color: #5b6d68;     /* Derivado del primary */
+    --accent-color: #7a8c87;        /* Acento más claro */
+    --action-color: #dbe3e1;        /* Gris cálido */
+    --success-color: #4caf50;       /* Verde éxito */
+    --delete-color: #e57373;        /* Rojo suave */
+    --background-color: #e6ecea;    /* Fondo claro cálido */
+    --card-background: #ffffff;     /* Blanco puro */
+    --text-color: #222;             /* Gris oscuro */
+    --border-color: #b7b7b7;        /* Gris claro */
+    --header-text-color: #ffffff;   /* Blanco */
+    --table-header-bg: #475c59; /* Encabezado más contrastado */
+    --table-header-text: #fff; /* Texto blanco */
+    --row-hover-bg: #cfd8d6; /* Hover más notorio */
+    --row-even-bg: #e6ecea; /* Fondo alterno más claro */
+    /* Ripple verde militar clarito */
+    --ripple-military: rgba(122, 140, 135, 0.28); /* #7a8c87 con alfa */
+    /* Paleta verde militar para hovers sobrios */
+    --military-green-500: #4b5a52; /* base */
+    --military-green-600: #3f4d46; /* más oscuro */
+    /* Énfasis para selector de fechas (más oscuro en claro) */
+    --dashboard-date-emphasis-color: #111;
+    /* Verde menta para botones de filtros */
+    --mint-500: #688a80;
+    --mint-600: #6b998c;
+    /* Tipografía unificada para títulos de gráficos */
+    --chart-title-font: 'Merriweather', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --chart-title-size: 1.05rem;
+}
+
+/* Swap de tema instantáneo: desactiva transiciones temporalmente */
+.theme-animating, .theme-animating *, .theme-animating *::before, .theme-animating *::after {
+    transition: none !important;
+}
+
+body.dark-mode {
+    /* Paleta basada en #3c4443 y #495f5b (modo oscuro base) */
+    --primary-color: #3c4443;
+    --primary-variant: #232826;
+    --secondary-color: #495f5b;
+    --accent-color: #5b6d68;        /* Acento derivado del primary oscuro */
+    --action-color: #222826;
+    --success-color: #4caf50;
+    --delete-color: #e57373;
+    --background-color: #232826;
+    --card-background: #2e3533;
+    --text-color: #e0e0e0;
+    --border-color: #495f5b;
+    --header-text-color: #ffffff;
+    --table-header-bg: #495f5b; /* Encabezado más destacado */
+    --table-header-text: #ffffff; /* Blanco para contraste */
+    --row-hover-bg: #3c4443; /* Hover más notorio */
+    --row-even-bg: #2e3533; /* Fondo alterno más oscuro */
+    /* Mantener la misma paleta militar en oscuro */
+    --military-green-500: #4b5a52;
+    --military-green-600: #3f4d46;
+    /* Énfasis para selector de fechas (más claro en oscuro) */
+    --dashboard-date-emphasis-color: #fff;
+    /* Tonos menta pedidos para modo oscuro */
+    --mint-500: #688a80;
+    --mint-600: #6b998c;
+}
+
+/* Login (Iniciar sesión) — ajustes específicos para modo oscuro */
+body.dark-mode #login-container {
+    /* Contraste fuerte: fondo oscuro, texto claro */
+    background-color: rgba(30,33,32,0.96);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+body.dark-mode #login-container h2 {
+    color: #ffffff;
+}
+
+body.dark-mode .form-group label {
+    color: #e6e6e6;
+}
+
+body.dark-mode #login-form input[type="text"],
+body.dark-mode #login-form input[type="password"] {
+    background-color: rgba(255,255,255,0.03); /* leve contraste contra el card oscuro */
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Placeholders — con prefijos para compatibilidad */
+body.dark-mode #login-form input::placeholder,
+body.dark-mode #login-form input::-webkit-input-placeholder {
+    color: rgba(255,255,255,0.60);
+}
+body.dark-mode #login-form input::-moz-placeholder {
+    color: rgba(255,255,255,0.60);
+    opacity: 1;
+}
+body.dark-mode #login-form input:-ms-input-placeholder {
+    color: rgba(255,255,255,0.60);
+}
+
+body.dark-mode #login-form button[type="submit"] {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+}
+
+body.dark-mode .error-message {
+    color: var(--delete-color);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Elementos de solo visualización: sin foco, sin selección ni interacción */
+.no-editable {
+    user-select: none;
+    pointer-events: none;
+}
+
+body {
+    font-family: 'Merriweather', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.7;
+    font-size: 16px;
+    transition: background-color 0.4s, color 0.4s;
+}
+
+/* Full-page background image behind all content only on the login page (20% opacity) */
+body.login-page::before {
+    content: '';
+    position: fixed;
+    inset: 0; /* top:0; right:0; bottom:0; left:0; */
+    background-image: url('fondo.jpeg'); /* Image is in same folder as this CSS file */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: 0.4; /* 20% transparency */
+    z-index: -1; /* Keep behind page content */
+    pointer-events: none; /* Do not block clicks */
+}
+.container {
+    max-width: 1400px;
+    margin: 30px auto;
+    padding: 32px;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(91, 106, 119, 0.1);
+}
+
+header {
+    background: linear-gradient(90deg, var(--primary-color) 60%, var(--secondary-color) 100%);
+    color: var(--header-text-color);
+    padding: 8px 20px; /* reduced vertical padding to make header shorter */
+    border-radius: 12px;
+    margin-bottom: 28px; /* slightly smaller gap below */
+    box-shadow: 0 4px 12px rgba(129, 144, 160, 0.10);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    min-height: 56px; /* ensure a compact minimum height */
+}
+
+/* Dark mode: header más luminoso para que el título resalte */
+body.dark-mode header {
+    /* Fondo intermedio con overlay sutil para mejor visibilidad sin ser chillón */
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
+        linear-gradient(90deg, var(--secondary-color) 58%, var(--accent-color) 100%);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Pequeño realce del título en modo oscuro para legibilidad */
+body.dark-mode .main-title {
+    text-shadow: 0 1px 1px rgba(0,0,0,0.35);
+}
+
+/* Login Form Styles */
+#login-container {
+    background-color: var(--card-background);
+    padding: 20px; /* reducido para achicar el formulario */
+    border-radius: 8px; /* esquinas ligeramente menos grandes */
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12); /* sombra más sutil */
+    max-width: 360px; /* ancho reducido */
+    margin: 16px auto; /* menos margen vertical */
+    text-align: center;
+    border: 1px solid var(--border-color); /* Add a subtle border */
+    position: relative;
+    z-index: 2; /* Keep the sign-in form above the full-page background */
+    overflow: hidden; /* Prevent overflow when rounded corners applied */
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease, filter 0.25s ease;
+}
+
+#login-container h2 {
+    color: var(--primary-color);
+    margin-bottom: 18px; /* espacio reducido */
+    font-size: 1.4em; /* título más compacto */
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 6px;
+}
+.date-range {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px; /* más compacto */
+    background: var(--surface-2, #ffffff);
+    border: 1px solid var(--border-color, #e6e6eb);
+    border-radius: 999px;
+    padding: 4px 8px; /* más compacto */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 3px 8px rgba(0,0,0,0.04);
+}
+
+.date-input {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px; /* más compacto */
+    background: var(--surface-1, #fff);
+    border-radius: 999px;
+    padding: 2px 6px 2px 4px; /* más compacto */
+}
+
+/* Asegurar que el icono de calendario dentro de .date-range no sea absoluto */
+.date-range .date-icon-btn {
+    position: static;
+    width: 28px;
+    height: 28px;
+    border: 1px solid transparent;
+    background: var(--surface-3, #f7f7fa);
+    color: #000;
+}
+.date-range .date-icon-btn::after { content: none; }
+
+.date-separator {
+    color: var(--muted-foreground, #6b7280);
+    font-weight: 600;
+    user-select: none;
+}
+
+.date-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; /* tamaño táctil mínimo cómodo */
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: var(--surface-3, #f7f7fa);
+    color: #000000;
+    cursor: pointer;
+    transition: background .2s ease, box-shadow .2s ease, transform .05s ease;
+}
+
+.date-icon-btn:hover {
+    background: var(--surface-hover, #eef2ff);
+    box-shadow: 0 2px 6px rgba(79,70,229,0.15);
+}
+
+.date-icon-btn:active {
+    transform: translateY(1px);
+}
+
+.date-input input[type="date"] {
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 4px 2px; /* más compacto */
+    color: var(--foreground, #111827);
+    font-size: 0.9rem; /* texto un poco más pequeño */
+}
+
+/* Asegurar altura consistente con los inputs existentes */
+.filter-section input[type="date"].date-picker {
+    height: 30px; /* más chico */
+    min-width: 120px; /* más chico */
+}
+
+/* Dark mode tweaks si aplica */
+@media (prefers-color-scheme: dark) {
+    .date-range {
+        background: var(--surface-2, #0b0b10);
+        border-color: var(--border-color, #2a2a32);
+    }
+    .date-input { background: var(--surface-1, #111117); }
+    .date-icon-btn { background: var(--surface-3, #161621); color: #000000; }
+    .date-icon-btn:hover { background: rgba(129,140,248,0.12); }
+    .date-input input[type="date"] { color: var(--foreground, #e5e7eb); }
+}
+
+/* Asegurar que el icono herede el color negro */
+.date-icon-btn i { color: inherit; }
+.date-icon-btn svg { width: 14px; height: 14px; }
+
+/* Aumentar legibilidad del icono */
+.date-icon-btn i { font-size: 14px; }
+
+/* Mejor contraste del botón en modo oscuro manteniendo el ícono negro */
+@media (prefers-color-scheme: dark) {
+    .date-icon-btn {
+        background: #e5e7eb; /* gris claro para contraste */
+        border: 1px solid #d1d5db;
+        color: #000000; /* icono negro */
+    }
+}
+
+
+#login-container h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 2px;
+    background-color: var(--accent-color); /* Accent color underline */
+    border-radius: 2px;
+}
+
+/* Hover / focus highlight para el cuadro de login */
+#login-container:hover,
+#login-container:focus-within {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+    border-color: rgba(73,95,91,0.8); /* Bordes más visibles al pasar */
+    filter: brightness(1.02);
+}
+
+/* Variante para modo oscuro: sombras y bordes más intensos */
+body.dark-mode #login-container:hover,
+body.dark-mode #login-container:focus-within {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    border-color: rgba(255,255,255,0.14);
+    filter: brightness(1.06);
+}
+
+.form-group {
+    margin-bottom: 16px; /* menor separación entre campos */
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px; /* reducido */
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.95em; /* tamaño de label ligeramente menor */
+}
+
+.form-group label i {
+    margin-right: 8px; /* Space between icon and text */
+    color: var(--secondary-color); /* Color the icon */
+}
+
+#login-form input[type="text"],
+#login-form input[type="password"] {
+    width: 100%;
+    padding: 12px 10px; /* padding reducido */
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.95em; /* fuente ligeramente menor */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--background-color); /* Slightly tinted background */
+}
+
+#login-form input[type="text"]:focus,
+#login-form input[type="password"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(90, 125, 115, 0.22); /* foco más discreto */
+    background-color: var(--card-background); /* White background on focus */
+}
+
+#login-form button[type="submit"] {
+    width: 100%;
+    padding: 10px; /* padding reducido */
+    font-size: 1em; /* tamaño de fuente más compacto */
+    margin-top: 12px;
+    border-radius: 6px; /* Match input fields */
+    background-color: var(--accent-color); /* Use accent color */
+    color: white;
+    font-weight: 600;
+    transition: background 0.25s ease, transform 0.12s cubic-bezier(.2,.9,.2,1), box-shadow 0.25s ease, filter 0.25s ease;
+    display: block;
+    margin: 12px auto;
+    position: relative; /* para pseudo-elemento de glow */
+    overflow: visible;
+    min-height: 44px; /* mantener tamaño cómodo en móvil */
+}
+
+/* Subtle hover: ligero levantamiento, gradiente suave y sombra difusa */
+#login-form button[type="submit"]:hover {
+    background-image: linear-gradient(180deg, var(--accent-color), var(--primary-color));
+    transform: translateY(-2px) scale(1.005); /* elevación más sutil */
+    box-shadow: 0 8px 18px rgba(34,34,34,0.10);
+    filter: brightness(1.03);
+}
+
+/* Pequeño anillo de foco para accesibilidad */
+#login-form button[type="submit"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(73,95,91,0.12), 0 8px 20px rgba(34,34,34,0.12);
+    transform: translateY(0);
+}
+
+/* Estado activo/tap */
+#login-form button[type="submit"]:active {
+    transform: translateY(0) scale(0.995); /* toques más firmes */
+    box-shadow: 0 6px 12px rgba(0,0,0,0.10);
+}
+
+/* Pseudo-elemento opcional para un glow muy sutil al hacer hover (no interfiere con clics) */
+#login-form button[type="submit"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    box-shadow: 0 8px 20px rgba(74,89,86,0);
+    pointer-events: none;
+    transition: box-shadow 0.35s ease, opacity 0.35s ease;
+}
+#login-form button[type="submit"]:hover::after {
+    box-shadow: 0 14px 36px rgba(74,89,86,0.06);
+}
+
+/* Loading state for buttons (used on Login) */
+.btn-loading {
+    transform: scale(0.96); /* Slight shrink */
+    transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.btn-loading i.fas.fa-spinner {
+    margin-right: 8px;
+}
+
+.btn-loading { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* Ensure the button doesn't cause layout shift when content changes: fix min-height */
+#login-form button[type="submit"] { min-height: 48px; }
+
+/* Fade-out animation for login container */
+.fade-out {
+    animation: fadeOutUp 400ms ease forwards;
+}
+
+@keyframes fadeOutUp {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-12px); }
+}
+
+/* Fade-in counterpart used when showing login after logout */
+.fade-in {
+    animation: fadeInDown 400ms ease forwards;
+}
+
+@keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-12px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.error-message {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: var(--delete-color); /* Use delete color for errors */
+    font-weight: 500;
+}
+
+/* Logo: mantener tamaño, centrar y mejorar visibilidad si el PNG es transparente */
+.logo-container {
+    width: 60px;
+    height: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9); /* fondo claro para logos transparentes */
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    margin-right: 12px;
+    overflow: hidden; /* recortar bordes del logo si se pasa */
+}
+body.dark-mode .logo-container {
+    background: rgba(252, 255, 252, 0.88); /* mantener fondo claro también en oscuro */
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+header img {
+    height: 52px; /* mismo tamaño visual dentro del contenedor */
+    width: auto;
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)); /* leve realce sobre el fondo claro */
+}
+
+.main-title {
+    font-family: 'Playfair Display', 'Merriweather', serif; /* Elegante para el título */
+    font-size: 1.9em; /* Slightly larger for emphasis */
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    margin: 0 auto; /* Center title visually */
+    line-height: 1.05;
+    text-transform: none;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.table-header h2 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.4em; /* Slightly smaller */
+    font-weight: 600; /* Bolder */
+}
+
+/* Estilos para inputs en tabla */
+.table-input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+}
+
+.table-input:not([disabled]):hover {
+    border-color: var(--border-color);
+}
+
+.table-input:not([disabled]):focus {
+    border-color: var(--accent-color);
+    background-color: var(--card-background);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25); /* Accent color focus ring */
+}
+
+/* Estilos para celdas de solo lectura */
+.read-only {
+    background-color: #f8faf9;
+    color: var(--text-color);
+    padding: 8px;
+    font-weight: 500;
+    user-select: none;
+    cursor: default;
+}
+
+td {
+    position: relative;
+    padding: 12px 15px;
+    vertical-align: middle !important; /* Ensure vertical alignment */
+}
+
+.save-btn {
+    background: none;
+    border: none;
+    color: var(--success-color);
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 4px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.save-btn:hover {
+    transform: scale(1.15); /* Less scaling */
+    color: #27ae60; /* Darker green on hover */
+}
+
+/* Tab Styles */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    position: relative;
+}
+
+.tab-button.active {
+    color: #fff;
+    background: linear-gradient(90deg, #495f5b 60%, #3c4443 100%);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(73,95,91,0.15);
+    padding: 4px 12px;
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Print Section Styles — convertido en una "card" elegante con overlay 10% */
+.print-section {
+    background-color: transparent; /* el color va en ::before */
+    padding: 18px 22px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center; /* centrado por defecto */
+    flex-wrap: wrap;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.print-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #f3f8fb; /* celeste muy clarito */
+    opacity: 0.1; /* 10% */
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.print-section > * {
+    position: relative;
+    z-index: 1; /* contenido por encima del fondo translúcido */
+}
+
+/* Modo oscuro: usar fondo de tarjeta y sombras discretas */
+body.dark-mode .print-section {
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+}
+body.dark-mode .print-section::before {
+    background: var(--card-background);
+    opacity: 0.1; /* 10% también en oscuro */
+}
+
+/* Remove h2 styling if not used */
+/* .print-section h2 { ... } */
+
+/* Distribución en grid centrado dentro de la card, sin afectar otros .button-group */
+.print-section .button-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; /* más aire entre botones superiores */
+    width: 100%;
+    max-width: 920px; /* mantener compacto */
+    margin: 0 auto;
+}
+
+.print-section button { /* Estilo específico para botones en esta card */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 0.95em;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid #cfd6dc;
+    background-color: #f6f9fb;
+    color: #2b3a42;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 140ms cubic-bezier(.2,.9,.2,1),
+                background-color 160ms ease,
+                border-color 160ms ease,
+                box-shadow 180ms ease,
+                color 160ms ease;
+}
+
+/* Botones superiores estilizados y compactos */
+.print-section .top-action {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem; /* un poco más chico */
+    padding: 8px 14px; /* más compacto */
+    border-radius: 999px; /* forma pill elegante */
+    background: linear-gradient(180deg, #f7fafb 0%, #eef3f4 100%);
+    border: 1px solid #cfd6dc;
+    color: #27343c;
+    letter-spacing: 0.2px;
+}
+
+.print-section .top-action i { font-size: 1rem; opacity: 0.85; }
+
+.print-section .top-action:hover {
+    transform: translateY(-1px) scale(1.02);
+    background: linear-gradient(180deg, #ffffff 0%, #eef6f1 100%);
+    border-color: rgba(76, 175, 80, 0.45);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    color: #245b2d;
+}
+
+.print-section .top-action:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.print-section .top-action:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(76,175,80,0.25);
+}
+
+/* Dark mode: aclarar fondo de Imprimir/Ver/Guardar para que destaque el botón de Backup */
+body.dark-mode .print-section .top-action {
+    background: linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.18) 100%);
+    border: 1px solid rgba(255,255,255,0.34);
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.30);
+}
+
+body.dark-mode .print-section .top-action:hover {
+    background: linear-gradient(180deg, rgba(255,255,255,0.40) 0%, rgba(255,255,255,0.22) 100%);
+    border-color: rgba(255,255,255,0.38);
+    color: #ffffff !important;
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.36);
+}
+
+body.dark-mode .print-section .top-action:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.28);
+}
+
+body.dark-mode .print-section .top-action:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.22), 0 8px 22px rgba(0,0,0,0.30);
+}
+
+.print-section button i {
+    font-size: 1.1em;
+    color: inherit;
+}
+
+.print-section button:hover {
+    transform: translateY(-1px) scale(1.03);
+    background-color: rgba(76, 175, 80, 0.12); /* verde suave */
+    border-color: rgba(76, 175, 80, 0.35);
+    color: #2e7d32; /* texto verde suave */
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
+}
+
+.print-section button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.print-section button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25), 0 6px 16px rgba(0,0,0,0.10);
+}
+
+/* Modo oscuro: mantener contraste adecuado */
+body.dark-mode .print-section button {
+    background-color: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.12);
+    color: #e0e0e0;
+}
+body.dark-mode .print-section button:hover {
+    background-color: rgba(76, 175, 80, 0.18);
+    border-color: rgba(76, 175, 80, 0.45);
+    color: #e8f5e9;
+}
+
+/* Accesibilidad: respetar usuarios con reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .print-section button {
+        transition: background-color 160ms ease, border-color 160ms ease, box-shadow 180ms ease, color 160ms ease;
+    }
+    .print-section button:hover,
+    .print-section button:active {
+        transform: none;
+    }
+}
+
+.print-section button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.print-section button:disabled i {
+    animation: none; /* Stop spinner animation if disabled */
+}
+
+.tab-content {
+    display: none; /* Hide tab content by default */
+}
+
+.tab-content.active {
+    display: block; /* Show active tab content */
+}
+
+.tab-content {
+    background: var(--card-background);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+    overflow-x: auto; /* Agregar scroll horizontal */
+    position: relative; /* Para posicionamiento de elementos fijos */
+    background-color: transparent;
+}
+
+/* Contenedor principal de la tabla */
+.table-container {
+    margin-top: 20px;
+    background: var(--card-background);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+/* Wrapper para el scroll horizontal */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+    position: relative;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap; /* Evitar que el texto se rompa en múltiples líneas */
+    min-width: 1200px; /* Ancho mínimo para asegurar scroll en pantallas pequeñas */
+    margin-bottom: 1rem;
+    background-color: var(--card-background);
+}
+
+/* Mantener la columna de acciones siempre visible */
+.actions-cell {
+    right: 0;
+    z-index: 1;
+    box-shadow: -5px 0 5px rgba(0, 0, 0, 0.1);
+    background-color: var(--action-color);
+}
+
+/* Ajustar anchos mínimos de columnas */
+th, td {
+    min-width: 100px; /* Ancho mínimo general */
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th:first-child, td:first-child { /* ID */
+    min-width: 60px;
+}
+
+th:nth-child(2), td:nth-child(2) { /* Fecha */
+    min-width: 100px;
+}
+
+th:nth-child(3), td:nth-child(3) { /* Proveedor/Cliente */
+    min-width: 200px; /* Increased width */
+}
+
+th:nth-child(4), td:nth-child(4) { /* Material */
+    min-width: 250px; /* Increased width */
+}
+
+th:nth-child(5), td:nth-child(5),
+th:nth-child(6), td:nth-child(6),
+th:nth-child(7), td:nth-child(7),
+th:nth-child(8), td:nth-child(8) { /* Pesos */
+    min-width: 120px; /* Increased width */
+}
+
+th:nth-child(9), td:nth-child(9),
+th:nth-child(10), td:nth-child(10) { /* Horas */
+    min-width: 110px; /* Slightly increased width */
+}
+
+th:nth-child(11), td:nth-child(11) { /* Chofer */
+    min-width: 180px; /* Increased width */
+}
+
+th:nth-child(12), td:nth-child(12) { /* Patente */
+    min-width: 120px; /* Increased width */
+}
+
+.actions-cell { /* Columna de acciones */
+    min-width: 200px;
+}
+
+/* Estilo para la barra de desplazamiento */
+.table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
+}
+
+/* Ajustar el ancho de las columnas */
+/* Apply to both tables */
+#comprasTable th:nth-child(1),
+#comprasTable td:nth-child(1),
+#ventasTable th:nth-child(1),
+#ventasTable td:nth-child(1) {
+    width: 60px; /* ID */
+}
+
+#comprasTable th:nth-child(2),
+#comprasTable td:nth-child(2),
+#ventasTable th:nth-child(2),
+#ventasTable td:nth-child(2) {
+    width: 100px; /* Fecha */
+}
+
+#comprasTable th:nth-child(9), /* Hora Entrada Compras */
+#comprasTable td:nth-child(9),
+#comprasTable th:nth-child(10), /* Hora Salida Compras */
+#comprasTable td:nth-child(10),
+#ventasTable th:nth-child(9), /* Hora Entrada Ventas */
+#ventasTable td:nth-child(9),
+#ventasTable th:nth-child(10), /* Hora Salida Ventas */
+#ventasTable td:nth-child(10) {
+    width: 100px;
+}
+
+#comprasTable th:last-child, /* Acciones Compras */
+#comprasTable td:last-child,
+#ventasTable th:last-child, /* Acciones Ventas */
+#ventasTable td:last-child {
+    width: 150px; /* Reduced width for actions */
+    text-align: center;
+}
+
+/* Width for Bruto, Tara, Neto columns (assuming 6, 7, 8) */
+#comprasTable th:nth-child(6),
+#comprasTable td:nth-child(6),
+#comprasTable th:nth-child(7),
+#comprasTable td:nth-child(7),
+#comprasTable th:nth-child(8),
+#comprasTable td:nth-child(8),
+#ventasTable th:nth-child(6),
+#ventasTable td:nth-child(6),
+#ventasTable th:nth-child(7),
+#ventasTable td:nth-child(7),
+#ventasTable th:nth-child(8),
+#ventasTable td:nth-child(8) {
+    width: 130px; /* Increased Bruto, Tara, Neto width */
+}
+
+/* Removed unused .form-group */
+
+/* Tabla Editable */
+/* Botones de acción en la tabla */
+.save-btn, .edit-btn, .delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    margin: 0 3px;
+    transition: transform 0.2s ease;
+}
+
+.save-btn {
+    color: var(--success-color);
+    font-size: 1.2em; /* Ensure icon size is consistent */
+}
+
+.edit-btn {
+    color: var(--accent-color);
+    font-size: 1.1em;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+.edit-btn:hover {
+    transform: scale(1.15); /* Less scaling */
+    color: #2980b9; /* Darker accent blue */
+}
+
+.delete-btn {
+    color: var(--delete-color);
+    font-size: 1.1em;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+.delete-btn:hover {
+    transform: scale(1.15); /* Less scaling */
+    color: #c0392b; /* Darker red */
+}
+
+/* Remove generic hover for individual control */
+/* .save-btn:hover, .delete-btn:hover, .pdf-btn:hover, .edit-btn:hover {
+    transform: scale(1.2);
+} */
+
+.actions-cell {
+    padding: 8px 4px;
+    min-width: 150px; /* Reduced min-width */
+    text-align: center; /* Center align content */
+    vertical-align: middle;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 5px; /* Slightly reduced gap for better wrapping */
+    width: 100%;
+}
+
+.print-action-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border-color);
+    padding: 4px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+}
+.copies-selector {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.copies-selector label {
+    font-size: 0.85em;
+    margin-bottom: 0;
+}
+.num-copies-select {
+    font-size: 0.85em;
+    padding: 2px 4px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.pdf-btn {
+    background-color: var(--secondary-color); /* Use secondary color */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 6px 12px;
+    color: var(--table-header-text); /* Use table header text color (White) */
+    font-size: 1.0em; /* Smaller */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.button-text {
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.pdf-btn i {
+    font-size: 1.0em; /* Match button size */
+}
+
+/* Efecto hover para el botón de PDF */
+.pdf-btn:hover {
+    background-color: #404854; /* Darker secondary */
+    transform: translateY(-1px); /* Lift effect */
+}
+
+/* Asegurar que los botones de acción sean del mismo tamaño */
+.save-btn, .delete-btn, .edit-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Estilo específico para el botón PDF */
+.pdf-btn {
+    min-width: 85px;
+    height: 32px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.editing input {
+    padding: 5px;
+    margin: 0;
+    width: 100%;
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+}
+
+td.editing {
+    padding: 5px;
+}
+
+/* Removed unused label rule */
+
+/* Removed unused general input rule */
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: var(--header-text-color); /* Use header text color (White) */
+    padding: 10px 18px; /* Adjusted padding */
+    border: none;
+    border-radius: 5px; /* Slightly more rounded */
+    cursor: pointer;
+    font-size: 0.95em; /* Slightly smaller */
+    font-weight: 500;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+.btn-primary:hover {
+    background-color: #2980b9; /* Darker accent blue */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+}
+
+/* Removed redundant global .btn-secondary definition */
+
+#logoutBtn {
+    /* Fondo más claro y texto oscuro para mejor contraste */
+    background-color: rgba(255,255,255,0.14);
+    color: var(--text-color);
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    /* Stronger default shadow and smooth transitions */
+    box-shadow: 0 8px 22px rgba(0,0,0,0.30);
+    transition: transform 180ms cubic-bezier(.2,.9,.2,1),
+                box-shadow 220ms ease,
+                filter 180ms ease;
+}
+
+/* Hover: lift slightly and increase brightness */
+#logoutBtn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+    box-shadow: 0 14px 36px rgba(0,0,0,0.38);
+}
+
+/* Active: press down */
+#logoutBtn:active {
+    transform: translateY(0) scale(0.995);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.28);
+}
+
+/* Accessibility: visible focus ring */
+#logoutBtn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(120, 131, 115, 0.12), 0 14px 36px rgba(0,0,0,0.30);
+}
+
+.table-section {
+    background-color: var(--card-background);
+    padding: 25px;
+    border-radius: 6px; /* Match header */
+    box-shadow: 0 2px 5px rgba(44, 58, 71, 0.1); /* Softer shadow */
+    border: 1px solid var(--border-color); /* Add subtle border */
+    overflow-x: auto;
+}
+
+.table-section h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.table-container {
+    overflow-x: auto;
+    width: 100%;
+    overflow-x: auto;
+    margin: 0;
+    padding: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 12px 15px; /* More padding */
+    text-align: left;
+    border-bottom: 1px solid var(--border-color); /* Lighter border */
+    border-right: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+th {
+    background-color: var(--table-header-bg);
+    color: var(--table-header-text);
+    font-weight: 600; /* Bolder */
+    font-size: 0.9em; /* Smaller */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom-width: 2px; /* Thicker bottom border for header */
+}
+
+tr:nth-child(even) {
+    background-color: var(--row-even-bg); /* Use variable */
+}
+
+tr:hover {
+    background-color: var(--row-hover-bg); /* Use variable */
+}
+
+.highlight-row {
+    animation: highlightFade 2s ease-out;
+}
+
+@keyframes highlightFade {
+    from {
+        background-color: #bde0ff;
+    }
+    to {
+        background-color: transparent;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    /* Removed unused .forms-container from media query */
+
+    /* Removed unused .form-section from media query */
+    .table-section { /* Keep .table-section styling */
+        padding: 15px;
+    }
+
+    th, td {
+        padding: 8px;
+        font-size: 0.9em;
+    }
+
+    /* Adjust actions column width for smaller screens */
+    #comprasTable th:last-child,
+    #comprasTable td:last-child,
+    #ventasTable th:last-child,
+    #ventasTable td:last-child {
+        width: 120px; /* Further reduced for mobile */
+        min-width: 120px;
+    }
+
+    .action-buttons {
+        gap: 5px; /* Reduce gap slightly */
+    }
+
+    .pdf-btn {
+        padding: 4px 8px;
+        font-size: 1em;
+        min-width: 70px;
+    }
+    .button-text {
+        font-size: 0.8em;
+    }
+}
+
+/* Styles for the "Duplicado" checkbox and label */
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.85em;
+    color: var(--text-color);
+    margin-left: 8px; /* Space it from the print button */
+    vertical-align: middle; /* Align with buttons */
+}
+
+.duplicado-checkbox {
+    margin-right: 5px;
+    transform: scale(0.9); /* Slightly smaller checkbox */
+    vertical-align: middle;
+}
+
+#comprasTable th:nth-child(1),
+#comprasTable td:nth-child(1) {
+    min-width: 60px; /* ID */
+}
+
+#comprasTable th:nth-child(2),
+#comprasTable td:nth-child(2) {
+    min-width: 100px; /* Fecha */
+}
+
+#comprasTable th:nth-child(3),
+#comprasTable td:nth-child(3) {
+    min-width: 200px; /* Increased Proveedor */
+}
+
+#comprasTable th:nth-child(4),
+#comprasTable td:nth-child(4) {
+    min-width: 200px; /* Increased Mercadería */
+}
+
+#comprasTable th:nth-child(5),
+#comprasTable td:nth-child(5),
+#comprasTable th:nth-child(6),
+#comprasTable td:nth-child(6),
+#comprasTable th:nth-child(7),
+#comprasTable td:nth-child(7),
+#comprasTable th:nth-child(8),
+#comprasTable td:nth-child(8) {
+    min-width: 120px; /* Increased Bruto, Tara, Merma, Neto */
+}
+
+#comprasTable th:nth-child(9),
+#comprasTable td:nth-child(9),
+#comprasTable th:nth-child(10),
+#comprasTable td:nth-child(10) {
+    min-width: 110px; /* Slightly increased Horas */
+}
+
+#comprasTable th:nth-child(11),
+#comprasTable td:nth-child(11) {
+    min-width: 180px; /* Increased Chofer */
+}
+
+#comprasTable th:nth-child(12),
+#comprasTable td:nth-child(12) {
+    min-width: 120px; /* Increased Patente */
+}
+
+#comprasTable th:last-child {
+    right: 0;
+    min-width: 150px;
+    background-color: var(--secondary-color) !important;
+    z-index: 1;
+}
+
+#comprasTable td:last-child {
+    right: 0;
+    min-width: 150px;
+    background-color: var(--action-color);
+    z-index: 1;
+}
+
+/* Estilos de botones */
+.btn-primary, .btn-secondary {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+    filter: brightness(1.1);
+}
+
+.btn-primary:active, .btn-secondary:active {
+    transform: scale(0.98);
+}
+
+/* Botón Backup destacado, respetando la paleta (mint/primary) */
+.btn-critical, .top-action.btn-critical, .print-section .btn-critical {
+    position: relative;
+    background: linear-gradient(180deg, var(--mint-600) 0%, var(--primary-color) 100%);
+    border: 1px solid var(--primary-color);
+    color: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(73, 95, 91, 0.34), inset 0 -2px 0 rgba(0,0,0,0.08);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    padding: 10px 18px;
+    letter-spacing: 0.2px;
+}
+.btn-critical i, .top-action.btn-critical i, .print-section .btn-critical i { color: inherit; }
+.btn-critical:hover, .top-action.btn-critical:hover, .print-section .btn-critical:hover {
+    background: linear-gradient(180deg, var(--mint-500) 0%, var(--primary-variant) 100%);
+    border-color: var(--secondary-color);
+    transform: translateY(-1px) scale(1.06);
+    box-shadow: 0 16px 36px rgba(73,95,91,0.44);
+}
+.btn-critical:active, .top-action.btn-critical:active, .print-section .btn-critical:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 3px 10px rgba(73,95,91,0.28);
+}
+.btn-critical:focus-visible, .top-action.btn-critical:focus-visible, .print-section .btn-critical:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(73,95,91,0.28), 0 8px 22px rgba(73,95,91,0.30);
+}
+
+/* Pulso sutil con color de la paleta (accesible, respeta reduced motion) */
+@keyframes criticalPulse {
+    0% { box-shadow: 0 6px 18px rgba(73,95,91,0.30); }
+    50% { box-shadow: 0 14px 34px rgba(73,95,91,0.55); }
+    100% { box-shadow: 0 6px 18px rgba(73,95,91,0.30); }
+}
+.btn-critical, .top-action.btn-critical, .print-section .btn-critical {
+    animation: criticalPulse 2.2s ease-in-out infinite, gradientShift 7.5s ease-in-out infinite;
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .btn-critical, .top-action.btn-critical, .print-section .btn-critical { animation: none !important; }
+}
+
+/* Intensificación específica para modo oscuro */
+body.dark-mode .btn-critical,
+body.dark-mode .top-action.btn-critical,
+body.dark-mode .print-section .btn-critical {
+    /* Gradiente más luminoso dentro de la paleta para destacar en oscuro */
+    background: linear-gradient(180deg, #74a386 0%, var(--mint-600) 100%);
+    border-color: #a8e0ca;
+    /* Halo exterior y leve borde interno para realce */
+    box-shadow: 0 0 0 3px rgba(168,224,210,0.40), 0 14px 36px rgba(0,0,0,0.60), inset 0 -2px 0 rgba(0,0,0,0.10);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+}
+body.dark-mode .btn-critical:hover,
+body.dark-mode .top-action.btn-critical:hover,
+body.dark-mode .print-section .btn-critical:hover {
+    /* Subir brillo y halo en hover */
+    background: linear-gradient(180deg, #86ac9c 0%, var(--mint-600) 100%);
+    transform: translateY(-1px) scale(1.09);
+    box-shadow: 0 0 0 4px rgba(168,224,210,0.48), 0 24px 56px rgba(0,0,0,0.70), inset 0 -2px 0 rgba(0,0,0,0.12);
+}
+body.dark-mode .btn-critical:focus-visible,
+body.dark-mode .top-action.btn-critical:focus-visible,
+body.dark-mode .print-section .btn-critical:focus-visible {
+    box-shadow: 0 0 0 5px rgba(168,224,210,0.55), 0 24px 56px rgba(0,0,0,0.70), inset 0 -2px 0 rgba(0,0,0,0.12);
+}
+
+/* (Sin badge ni texto adicional) */
+
+/* Modo oscuro: los colores var() ya se adaptan a la paleta definida */
+
+/* Filter Section — versión elegante y consistente claro/oscuro */
+.filter-section {
+    position: relative;
+    background: transparent; /* el fondo real va en ::before */
+    padding: 20px; /* más respiro interno */
+    border-radius: 10px;
+    margin-bottom: 24px; /* separarla un poco más de la tabla */
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+.filter-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--card-background);
+    opacity: 0.18; /* ligero velo para separar del fondo */
+    pointer-events: none;
+}
+
+.filter-section form {
+    position: relative;
+    display: flex;
+    align-items: center; /* alinea verticalmente en una fila */
+    gap: 20px; /* más separación entre grupos */
+    flex-wrap: nowrap; /* una sola fila por defecto */
+    z-index: 1; /* sobre el overlay */
+}
+
+.filter-section .form-group {
+    display: flex;
+    flex-direction: row; /* label e input en línea */
+    align-items: center;
+    gap: 12px; /* más aire entre etiqueta y campo */
+    margin-bottom: 0;
+    min-width: 200px;
+}
+
+/* Hacer que el primer grupo (buscar) crezca y ocupe el espacio útil */
+.filter-section form .form-group:first-of-type {
+    flex: 1 1 320px;
+    min-width: 280px;
+}
+
+.filter-section .form-group label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-color); /* mantiene legibilidad en ambos modos */
+}
+
+/* Forzar texto negro para las etiquetas de "Rango de fechas" */
+.filter-section .form-group .date-range-label {
+    color: #000 !important;
+}
+
+/* También asegurar en modo oscuro */
+body.dark-mode .filter-section .form-group .date-range-label {
+    color: #000 !important;
+}
+
+/* Destacar 'Buscar:' en negrita (claro y oscuro) */
+.filter-section label[for="compras-search"],
+.filter-section label[for="ventas-search"] {
+    font-weight: 700 !important; /* usar peso disponible de Merriweather */
+    color: #000 !important;      /* siempre negro, sobre fondo claro del filtro */
+}
+
+.filter-section input[type="text"],
+.filter-section input[type="date"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px; /* forma pill */
+    font-size: 0.95rem;
+    background: var(--card-background);
+    color: var(--text-color);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+    height: 40px; /* alinear con botones */
+}
+
+/* Ícono de lupa dentro de los buscadores (Compras/Ventas) */
+#compras-content .filter-section #compras-search,
+#ventas-content .filter-section #ventas-search {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 16px 16px;
+    padding-left: 40px; /* espacio para la lupa */
+}
+/* Mostrar una lupa también en el placeholder del campo buscar */
+#compras-content .filter-section #compras-search::placeholder,
+#ventas-content .filter-section #ventas-search::placeholder {
+    color: #000;
+    opacity: 0.65;
+    font-family: inherit;
+    font-size: 0.95rem;
+    /* Unicode lupa: U+1F50D */
+    content: '\1F50D ' attr(placeholder);
+}
+/* Oscuro (estas pestañas usan fondo claro): icono negro funciona igual */
+body.dark-mode #compras-content .filter-section #compras-search,
+body.dark-mode #ventas-content .filter-section #ventas-search {
+    background-color: #fff; /* ya fijado arriba, aquí se asegura */
+}
+
+/* Wrapper para input de fecha con icono a la izquierda */
+.filter-section .date-input-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 165px; /* ancho reducido para input de fecha */
+}
+
+.filter-section .date-input-wrapper input[type="date"] {
+    width: 100%;
+    padding-left: 38px; /* espacio para el icono a la izquierda */
+    padding-right: 14px; /* indicador nativo a la derecha */
+}
+
+/* Inputs date-picker como solo-calendario */
+.filter-section .date-input-wrapper .date-picker {
+    cursor: text;
+    caret-color: auto;
+    padding-left: 9px;
+    padding-right: 5px;
+}
+
+.filter-section .date-input-wrapper .date-icon-btn {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: #000; /* icono negro como pidió el usuario */
+    cursor: pointer;
+    padding: 0;
+}
+
+.filter-section .date-input-wrapper .date-icon-btn i { font-size: 14px; line-height: 1; }
+
+/* Aumentar área clickeable sin desplazar */
+.filter-section .date-input-wrapper .date-icon-btn::after {
+    content: "";
+    position: absolute;
+    inset: -6px; /* hot area */
+}
+
+/* En modo oscuro, el icono sigue negro y el input mantiene fondo claro según overrides previos */
+body.dark-mode #compras-content .filter-section .date-icon-btn,
+body.dark-mode #ventas-content .filter-section .date-icon-btn { color: #000; }
+
+/* Mejora específica del selector de fecha en Compras/Ventas (sin halo para evitar solapes) */
+#compras-content .filter-section #compras-date,
+#ventas-content .filter-section #ventas-date {
+    height: 40px; /* misma altura que botones y buscador */
+    line-height: 1;
+    font-variant-numeric: tabular-nums; /* números alineados */
+    caret-color: var(--primary-color);
+    color: #000; /* texto negro */
+}
+
+/* Placeholders visibles también en negro */
+#compras-content .filter-section #compras-date::placeholder,
+#ventas-content .filter-section #ventas-date::placeholder {
+    color: #000;
+    opacity: 0.65;
+}
+
+#compras-content .filter-section #compras-date:hover,
+#ventas-content .filter-section #ventas-date:hover {
+    border-color: var(--secondary-color);
+}
+
+#compras-content .filter-section #compras-date:focus,
+#ventas-content .filter-section #ventas-date:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(73,95,91,0.18);
+}
+
+/* WebKit/Chromium: indicador del calendario más integrado */
+.filter-section input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    margin-right: 2px; /* más cerca del borde, no invade */
+    opacity: 0.85;
+    background: transparent; /* evitar fondo distinto */
+    width: 18px;
+    height: 18px;
+}
+/* En modo oscuro para Compras/Ventas ya se fuerza el icono oscuro (negro) arriba */
+
+.filter-section input[type="text"]::placeholder {
+    color: rgba(0,0,0,0.5);
+}
+body.dark-mode .filter-section input[type="text"]::placeholder {
+    color: rgba(255,255,255,0.6);
+}
+
+.filter-section input[type="text"]:focus,
+.filter-section input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(73,95,91,0.18);
+    background: var(--card-background);
+}
+
+.filter-section .button-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+    margin-left: auto; /* empuja los botones a la derecha */
+    flex-shrink: 0; /* evita que se encojan */
+}
+
+/* Mantener orden natural de grupos; no empujar el segundo grupo */
+#compras-content .filter-section form .form-group:nth-of-type(2),
+#ventas-content .filter-section form .form-group:nth-of-type(2) {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Compactación específica para fechas en solapas Compras/Ventas */
+#compras-content .date-range,
+#ventas-content .date-range { gap: 4px; padding: 4px 6px; }
+
+#compras-content .date-range .date-input,
+#ventas-content .date-range .date-input { gap: 4px; padding: 2 4px; }
+
+#compras-content .date-range .date-icon-btn,
+#ventas-content .date-range .date-icon-btn { width: 22px; height: 22px; }
+
+#compras-content .date-range .date-input input[type="date"],
+#ventas-content .date-range .date-input input[type="date"] {
+    padding: 2px 2px;
+    font-size: 0.85rem;
+    height: 26px;
+    width: 115px; /* evita expansión dentro de la píldora */
+    text-align: center; /* centrar fecha */
+}
+
+/* WebKit/Chromium: centrar campos internos del date input */
+#compras-content .date-range .date-input input[type="date"]::-webkit-datetime-edit,
+#ventas-content .date-range .date-input input[type="date"]::-webkit-datetime-edit {
+    text-align: center;
+}
+
+#compras-content .filter-section input[type="date"].date-picker,
+#ventas-content .filter-section input[type="date"].date-picker {
+    height: 26px;
+    min-width: 100px;
+}
+
+/* Unificar tipografía y estilo de los botones (Filtrar / Limpiar / Descarga) */
+.filter-section .button-group .btn-primary,
+.filter-section .button-group .btn-secondary {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem; /* un poco más chico */
+    border-radius: 999px; /* pill */
+    padding: 10px 16px; /* igualar altura a inputs */
+    line-height: 1;
+    height: 40px; /* alinear con campos */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    background-color: var(--mint-500); /* verde menta */
+    border: 1px solid rgba(0,0,0,0.08);
+    color: #ffffff;
+    transition: transform 140ms cubic-bezier(.2,.9,.2,1),
+                background-color 160ms ease,
+                border-color 160ms ease,
+                box-shadow 180ms ease,
+                color 160ms ease;
+}
+.filter-section .button-group .btn-primary:hover,
+.filter-section .button-group .btn-secondary:hover {
+    transform: translateY(-1px) scale(1.02);
+    background-color: var(--mint-600);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+.filter-section .button-group .btn-primary:active,
+.filter-section .button-group .btn-secondary:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.filter-section .button-group .btn-primary i,
+.filter-section .button-group .btn-secondary i { font-size: 0.95rem; opacity: 0.9; }
+
+/* MODO OSCURO: Filtrar / Limpiar / Descarga con el mismo color/gradiente que "Realizar Backup" */
+body.dark-mode .filter-section .button-group .btn-primary,
+body.dark-mode .filter-section .button-group .btn-secondary {
+    background: linear-gradient(180deg, var(--mint-600) 0%, var(--primary-color) 100%);
+    border: 1px solid var(--primary-color);
+    color: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(73, 95, 91, 0.34), inset 0 -2px 0 rgba(0,0,0,0.08);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+}
+body.dark-mode .filter-section .button-group .btn-primary:hover,
+body.dark-mode .filter-section .button-group .btn-secondary:hover {
+    background: linear-gradient(180deg, var(--mint-500) 0%, var(--primary-variant) 100%);
+    border-color: var(--secondary-color);
+    transform: translateY(-1px) scale(1.06);
+    box-shadow: 0 16px 36px rgba(73,95,91,0.44);
+}
+body.dark-mode .filter-section .button-group .btn-primary:active,
+body.dark-mode .filter-section .button-group .btn-secondary:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 3px 10px rgba(73,95,91,0.28);
+}
+body.dark-mode .filter-section .button-group .btn-primary:focus-visible,
+body.dark-mode .filter-section .button-group .btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(73,95,91,0.28), 0 8px 22px rgba(73,95,91,0.30);
+}
+
+/* MODO OSCURO: hacer que "Realizar Backup" tenga el mismo color y efecto que Filtrar/Limpiar/Descarga */
+body.dark-mode #backupBtn {
+    background: linear-gradient(180deg, var(--mint-600) 0%, var(--primary-color) 100%);
+    border: 1px solid var(--primary-color);
+    color: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(73, 95, 91, 0.34), inset 0 -2px 0 rgba(0,0,0,0.08);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    animation: none !important; /* sin pulso, mismo efecto que filtros */
+    text-shadow: none;
+}
+body.dark-mode #backupBtn:hover {
+    background: linear-gradient(180deg, var(--mint-500) 0%, var(--primary-variant) 100%);
+    border-color: var(--secondary-color);
+    transform: translateY(-1px) scale(1.06);
+    box-shadow: 0 16px 36px rgba(73,95,91,0.44);
+}
+body.dark-mode #backupBtn:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 3px 10px rgba(73,95,91,0.28);
+}
+body.dark-mode #backupBtn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(73,95,91,0.28), 0 8px 22px rgba(73,95,91,0.30);
+}
+
+/* Mejoras responsive: apilar grupos en pantallas angostas */
+@media (max-width: 700px) {
+    .filter-section form {
+    flex-wrap: wrap; /* en pantallas pequeñas, permitir salto de línea */
+    align-items: stretch;
+    gap: 12px 16px; /* filas y columnas con buen aire */
+    }
+    .filter-section .form-group {
+        min-width: min(100%, 320px);
+        width: 100%;
+    }
+    .filter-section .button-group {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        margin-left: 0;
+    gap: 10px; /* mantener separación cómoda */
+    }
+}
+
+
+/* Botones de acciones */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.save-btn, .delete-btn, .pdf-btn {
+    padding: 6px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    color: black;
+}
+
+.save-btn {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.delete-btn {
+    background-color: var(--delete-color);
+    color: white;
+}
+
+.pdf-btn {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* Print section */
+.print-section {
+    margin-bottom: 20px;
+}
+
+.button-group {
+    display: flex;
+    gap: 12px; /* un poco más de aire entre botones */
+    margin-bottom: 20px;
+}
+
+/* Checkbox label */
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="number"] {
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(153, 175, 166, 0.2);
+}
+
+/* Validation states for login inputs */
+.is-valid {
+    border-color: var(--success-color) !important;
+    box-shadow: 0 0 0 4px rgba(76,175,80,0.12) !important;
+}
+.is-invalid {
+    border-color: var(--delete-color) !important;
+    box-shadow: 0 0 0 4px rgba(229,115,115,0.12) !important;
+}
+
+.validation-icon {
+    position: absolute;
+
+/* --- Toasts reutilizables --- */
+#toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+}
+.toast {
+    min-width: 240px;
+    max-width: min(92vw, 420px);
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    backdrop-filter: saturate(140%) blur(2px);
+    transform: translateY(0);
+    opacity: 0.98;
+    transition: transform .2s ease, opacity .2s ease;
+}
+.toast-success { background: linear-gradient(180deg, #4caf50, #2e7d32); }
+.toast-error { background: linear-gradient(180deg, #e57373, #c62828); }
+.toast-info { background: linear-gradient(180deg, #495f5b, #3c4443); }
+.toast.toast-hide { opacity: 0; transform: translateY(-8px); }
+
+/* --- Efecto ripple para botones de añadir fila --- */
+.btn-add { position: relative; overflow: hidden; }
+.btn-add .ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 600ms linear;
+    background: var(--ripple-military);
+    pointer-events: none;
+}
+@keyframes ripple { to { transform: scale(3); opacity: 0; } }
+
+/* --- Encabezado de tabla fijo --- */
+.table-wrapper thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: var(--table-header-bg);
+}
+.table-wrapper thead th::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    height: 1px;
+    background: rgba(0,0,0,0.12);
+}
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.95em;
+    pointer-events: none;
+}
+.validation-valid { color: var(--success-color); }
+.validation-invalid { color: var(--delete-color); }
+
+/* Contenedor para el campo de contraseña y el botón del ojo (fuera del recuadro) */
+.password-wrapper {
+    position: relative; /* permite ubicar iconos dentro del input */
+}
+
+/* Botón para mostrar/ocultar contraseña fuera del recuadro */
+#togglePassword.toggle-password {
+    position: absolute;
+    right: 44px; /* deja espacio para la validación a la derecha */
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.08);
+    color: #444;
+    cursor: pointer;
+    padding: 0;
+    width: 30px; /* hit area un poco mayor */
+    height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 160ms ease, border-color 160ms ease, color 140ms ease, transform 80ms ease;
+}
+#togglePassword.toggle-password i { font-size: 15px; line-height: 1; }
+#togglePassword.toggle-password:hover { background: rgba(0,0,0,0.06); color: #000; }
+#togglePassword.toggle-password:active { transform: scale(0.98); }
+#togglePassword.toggle-password[aria-pressed="true"] { background: rgba(73,95,91,0.10); border-color: rgba(73,95,91,0.28); color: var(--primary-color); }
+#togglePassword.toggle-password:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(73,95,91,0.28); }
+
+/* El icono de validación queda dentro del grupo, a la derecha del input y no choca con el ojo */
+.password-wrapper .validation-icon { right: 12px; top: 50%; transform: translateY(-50%); }
+
+/* El input ya no necesita padding extra a la derecha */
+#login-form input#password { padding-right: 92px; /* espacio para ojo + validación sin cambiar el tamaño externo */ }
+
+/* Dark mode para botón de mostrar contraseña */
+body.dark-mode #togglePassword.toggle-password {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.14);
+    color: #ddd;
+}
+body.dark-mode #togglePassword.toggle-password:hover {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+}
+body.dark-mode #togglePassword.toggle-password[aria-pressed="true"] {
+    background: rgba(168,224,210,0.14);
+    border-color: rgba(168,224,210,0.34);
+    color: #a8e0d2;
+}
+
+/* Ensure inputs' parent is positioned for absolute icon placement */
+#login-container .form-group { position: relative; }
+
+/* Animaciones sutiles para micro-interacción */
+.validation-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 180ms cubic-bezier(.2,.9,.2,1), opacity 180ms ease;
+    opacity: 0;
+}
+
+/* Cuando el icono se añade se anima con 'pop' para válido */
+.validation-valid {
+    animation: popIn 360ms cubic-bezier(.2,.9,.2,1);
+    opacity: 1;
+}
+
+/* Para inválido, un pequeño shake que no distrae */
+.validation-invalid {
+    animation: shake 420ms ease-in-out;
+    opacity: 1;
+}
+
+@keyframes popIn {
+    0% { transform: translateY(-50%) scale(0.6); opacity: 0; }
+    60% { transform: translateY(-50%) scale(1.06); opacity: 1; }
+    100% { transform: translateY(-50%) scale(1); opacity: 1; }
+}
+
+@keyframes shake {
+    0% { transform: translateY(-50%) translateX(0); }
+    20% { transform: translateY(-50%) translateX(-6%); }
+    40% { transform: translateY(-50%) translateX(6%); }
+    60% { transform: translateY(-50%) translateX(-3%); }
+    80% { transform: translateY(-50%) translateX(2%); }
+    100% { transform: translateY(-50%) translateX(0); }
+}
+
+/* Reduce ruido en pantallas pequeñas */
+@media (max-width: 480px) {
+    .validation-icon { right: 8px; font-size: 0.85em; }
+}
+
+/* Highlight animation */
+@keyframes highlight {
+    0% { background-color: rgba(153, 175, 166, 0.2); }
+    100% { background-color: transparent; }
+}
+
+.highlight-row {
+    animation: highlight 2s ease-out;
+}
+
+/* Styles for scroll arrows */
+.scroll-arrows-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 10px 5px;
+    cursor: pointer;
+    z-index: 10;
+    user-select: none;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.scroll-arrow:hover {
+    opacity: 1;
+}
+
+.scroll-arrow.left {
+    left: 0;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.scroll-arrow.right {
+    right: 0;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+/* --- Dashboard Styles --- */
+.dashboard-controls {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: var(--card-background);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* Selector de fechas del dashboard: más compacto y sobrio */
+.dashboard-date-elegant {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto 12px auto;
+    background: transparent; /* fondo por pseudo-elemento */
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-date-elegant::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--card-background);
+    opacity: 0.2; /* 20% de opacidad */
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.dashboard-date-elegant > * {
+    position: relative;
+    z-index: 1; /* contenido por encima del fondo translúcido */
+}
+
+.dashboard-date-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.dashboard-date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+    align-items: center; /* centrar contenido */
+}
+
+.dashboard-date-label {
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-shadow: none;
+    font-style: normal;
+    text-transform: none;
+    text-align: center; /* centrar texto */
+}
+
+.dashboard-date-input {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 4px; /* más compacto */
+    font-size: 0.8rem; /* más compacto */
+    background: var(--card-background);
+    color: var(--text-color);
+    box-shadow: none;
+    transition: border-color 0.15s ease;
+    font-family: inherit;
+    outline: none;
+}
+
+.dashboard-date-input:hover {
+    border-color: var(--secondary-color);
+}
+
+.dashboard-date-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: none;
+    background: var(--card-background);
+}
+
+.dashboard-date-separator {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    font-weight: 600;
+    margin: 0 4px;
+    filter: none;
+}
+
+.dashboard-date-btn-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.dashboard-date-btn {
+    font-size: 0.95rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
+    border: 1px solid var(--primary-color);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    font-family: inherit;
+    letter-spacing: 0;
+    position: relative; /* ripple */
+    overflow: hidden;   /* recorta ripple */
+}
+
+.dashboard-date-btn:hover {
+    background: var(--military-green-500);
+    border-color: var(--military-green-500);
+    filter: none;
+}
+
+/* Variante compacta solo-ícono al lado de las fechas */
+.dashboard-date-btn.icon-only {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 16px;
+}
+.dashboard-date-btn.icon-only i { pointer-events: none; }
+
+/* Ocultar el antiguo wrapper si queda en DOM por compatibilidad */
+.dashboard-date-btn-wrapper { display: none; }
+
+/* Ícono girando mientras carga */
+@keyframes dash-spin { to { transform: rotate(360deg); } }
+.dashboard-date-btn.loading i {
+    display: inline-block;
+    animation: dash-spin 1s linear infinite;
+}
+
+/* Micro-salto/bounce al click */
+@keyframes dash-bounce {
+    0% { transform: scale(0.98); }
+    60% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+.dashboard-date-btn.bounce {
+    animation: dash-bounce 200ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* Ripple verde militar clarito */
+.dashboard-date-btn .ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    background: var(--ripple-military);
+    pointer-events: none;
+    animation: ripple-anim 600ms ease-out forwards;
+}
+
+@keyframes ripple-anim {
+    to { transform: scale(3); opacity: 0; }
+}
+
+.dashboard-date-btn:active {
+    transform: none;
+}
+
+.dashboard-controls .form-group {
+    margin-bottom: 0;
+}
+
+/* Presets de fechas (chips) */
+.date-presets {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+.preset-chip {
+    border: 1px solid var(--border-color);
+    background: rgba(255,255,255,0.7);
+    color: #000;
+    padding: 6px 10px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+}
+.preset-chip:hover { background: #eef3f2; transform: translateY(-1px); }
+.preset-chip:active { transform: translateY(0); }
+.preset-chip.active { background: #cfe6e1; border-color: #7a8c87; }
+
+body.dark-mode .preset-chip { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+body.dark-mode .preset-chip:hover { background: rgba(255,255,255,0.16); }
+body.dark-mode .preset-chip.active { background: rgba(122,140,135,0.28); border-color: rgba(255,255,255,0.3); }
+
+.dashboard-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.kpi-card {
+    background-color: var(--card-background);
+    padding: 12px 14px;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    text-align: center;
+    border-left: 4px solid var(--primary-color);
+    transition: transform .18s ease, box-shadow .18s ease, background-color .3s ease, color .3s ease;
+}
+
+.kpi-card h3 {
+    margin-bottom: 6px;
+    font-size: 0.9em;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+}
+
+.kpi-card p {
+    font-size: 1.2em;
+    font-weight: 800;
+    color: var(--text-color);
+    line-height: 1.1;
+}
+
+.kpi-card.card-compras { border-color: var(--success-color); }
+.kpi-card.card-ventas { border-color: var(--delete-color); }
+.kpi-card.card-balance { border-color: var(--primary-color); }
+
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,0.12); }
+
+/* Animación de pulso para valores KPI */
+@keyframes kpiPulse {
+    0% { transform: scale(1); opacity: 1; }
+    60% { transform: scale(1.06); opacity: .95; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.kpi-card p.pulse { animation: kpiPulse 600ms ease; }
+
+/* Modo oscuro: texto blanco en KPI y títulos */
+body.dark-mode .kpi-card h3 { color: #fff; }
+body.dark-mode .kpi-card p { color: #fff; }
+
+.dashboard-chart {
+    background-color: var(--card-background);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.pie-chart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pie-chart h3 {
+    margin-bottom: 15px;
+}
+
+/* Theme Switch */
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    right: 100px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.theme-switch {
+    display: inline-block;
+    height: 34px;
+    position: relative;
+    width: 60px;
+}
+
+.theme-switch input {
+    display: none;
+}
+
+.slider {
+    background-color: #ccc;
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: background-color 0.4s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+}
+
+.slider:before {
+    background-color: #fff;
+    bottom: 4px;
+    content: "";
+    height: 26px;
+    left: 4px;
+    position: absolute;
+    transition: .4s;
+    width: 26px;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+/* Iconos sol/luna en el switch */
+.icon-moon, .icon-sun {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    transition: color 0.4s, opacity 0.4s;
+    pointer-events: none;
+}
+.icon-moon {
+    left: 10px;
+    color: #888;
+    opacity: 1;
+}
+.icon-sun {
+    right: 10px;
+    color: #e2d7b7;
+    opacity: 0.7;
+}
+input:checked + .slider .icon-moon {
+    color: #444;
+    opacity: 0.5;
+}
+input:checked + .slider .icon-sun {
+    color: #ffe066;
+    opacity: 1;
+}
+/* Transiciones para fondo y tarjetas */
+.card, .tab-content, .table-section, .dashboard-controls, .dashboard-grid, .chart-container, .kpi-container, .chart-container-full {
+    transition: background-color 0.4s, color 0.4s, box-shadow 0.4s;
+}
+
+
+/* Force light theme for Compras and Ventas tabs */
+body.dark-mode #compras-content,
+body.dark-mode #ventas-content {
+    --primary-color: #5a7d75;
+    --secondary-color: #6b8e84;
+    --accent-color: #4f6a63;
+    --action-color: #d0dad6;
+    --success-color: #388e3c;
+    --delete-color: #d32f2f;
+    --background-color: rgba(168, 196, 180, 0.3);
+    --card-background: #ffffff;
+    --text-color: #212121;
+    --border-color: #8f96a5;
+    --header-text-color: #ffffff;
+    --table-header-bg: var(--secondary-color);
+    --table-header-text: #ffffff;
+    --row-hover-bg: #d0e0db;
+    --row-even-bg: #ffffff;
+}
+
+/* Explicitly set background for the tab content area itself */
+body.dark-mode .tab-content#compras-content,
+body.dark-mode .tab-content#ventas-content {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+/* Labels de filtros respetan el color de texto del tema */
+/* Regla anterior que forzaba negro en modo oscuro ha sido removida para mantener consistencia */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px; /* espacio más compacto entre gráficos */
+    margin-top: 20px;
+}
+
+.chart-container {
+    background-color: var(--card-background);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+}
+.chart-container > h3,
+.chart-container-full > h3 {
+    font-family: var(--chart-title-font);
+    font-size: var(--chart-title-size);
+    font-weight: 700;
+    letter-spacing: .2px;
+    margin-bottom: 10px;
+}
+
+/* Card de "Últimos 5 días": mismo fondo que el resto de los gráficos */
+.chart-container.card-5days {
+    position: relative;
+    /* Igualar fondo al resto */
+    background: none;
+    background-color: var(--card-background);
+    /* Quitar borde/especiales para que luzca igual que .chart-container */
+    border: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    overflow: hidden;
+    color: var(--text-color);
+    min-height: 260px;
+    justify-content: center;
+}
+.chart-container.card-5days::after { content: none; }
+.chart-container.card-5days h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: inherit; /* igual que los demás */
+    font-family: var(--chart-title-font);
+    font-size: var(--chart-title-size);
+    font-weight: 700;
+    letter-spacing: .2px;
+}
+.chart-container.card-5days h3 i { color: var(--secondary-color); }
+
+/* Modo oscuro: títulos de todos los gráficos en blanco */
+body.dark-mode .chart-container > h3,
+body.dark-mode .chart-container-full > h3,
+body.dark-mode #section-last-moves > h3 {
+    color: #ffffff !important;
+}
+
+/* Texto de promedio debajo de la card de últimos 5 días */
+.avg-5days-text {
+    margin-top: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+body.dark-mode .avg-5days-text {
+    color: #fff;
+}
+
+/* Hover sutil para dar sensación premium */
+.chart-container.card-5days:hover {
+    transform: translateY(-2px);
+    transition: transform .18s ease, box-shadow .18s ease;
+    box-shadow: 0 16px 36px rgba(73, 95, 91, 0.20);
+}
+
+/* Dark mode: mismo fondo que .chart-container (sin degradés) */
+body.dark-mode .chart-container.card-5days {
+    background: none;
+    background-color: var(--card-background);
+    border: none;
+    /* Mantener la misma sombra sutil que el resto */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    color: var(--text-color);
+}
+body.dark-mode .chart-container.card-5days h3 { color: inherit; }
+body.dark-mode .chart-container.card-5days h3 i { color: var(--secondary-color); }
+
+/* Últimos movimientos */
+.last-moves-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.last-move { display: grid; grid-template-columns: 80px 1fr 1fr auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-background); }
+.last-move .lm-date { font-weight: 700; opacity: .9; }
+.last-move .lm-who { font-weight: 600; }
+.last-move .lm-mat { opacity: .85; }
+.last-move .lm-neto { font-weight: 800; }
+.last-move .lm-neto.pos { color: #2e7d32; }
+.last-move .lm-neto.neg { color: #c62828; }
+body.dark-mode .last-move { background: var(--card-background); color: #fff; border-color: rgba(255,255,255,0.18); }
+body.dark-mode .last-move .lm-neto.pos { color: #7bd68a; }
+body.dark-mode .last-move .lm-neto.neg { color: #ff8a80; }
+
+/* --- Corrección de legibilidad del buscador en modo oscuro (Compras/Ventas) --- */
+/* En modo oscuro, estas pestañas usan paleta clara; forzamos texto/placeholder negros */
+body.dark-mode #compras-content .filter-section #compras-search,
+body.dark-mode #ventas-content .filter-section #ventas-search {
+    color: #000 !important;
+    background-color: #fff; /* asegurar contraste */
+}
+body.dark-mode #compras-content .filter-section #compras-search::placeholder,
+body.dark-mode #ventas-content .filter-section #ventas-search::placeholder {
+    color: #000 !important;
+    opacity: 0.65;
+}
+
+/* Labels específicos de filtros en negro (#000) en modo oscuro (Compras/Ventas) */
+body.dark-mode #compras-content .filter-section label[for="compras-search"],
+body.dark-mode #compras-content .filter-section label[for="compras-date"],
+body.dark-mode #ventas-content .filter-section label[for="ventas-search"],
+body.dark-mode #ventas-content .filter-section label[for="ventas-date"] {
+    color: #000 !important;
+}
+
+/* Inputs de fecha en negro en modo oscuro (Compras/Ventas) */
+body.dark-mode #compras-content .filter-section #compras-date,
+body.dark-mode #ventas-content .filter-section #ventas-date {
+    color: #000 !important;
+    background-color: #fff; /* fondo claro para mayor legibilidad */
+    border: 1px solid var(--border-color);
+    color-scheme: light; /* icono del calendario y controles en claro */
+}
+body.dark-mode #compras-content .filter-section #compras-date::-webkit-calendar-picker-indicator,
+body.dark-mode #ventas-content .filter-section #ventas-date::-webkit-calendar-picker-indicator {
+    filter: brightness(0); /* icono calendario negro */
+}
+
+/* Forzar icono del calendario negro y visible también en modo claro (Compras/Ventas) */
+#compras-content .filter-section #compras-date::-webkit-calendar-picker-indicator,
+#ventas-content .filter-section #ventas-date::-webkit-calendar-picker-indicator {
+    filter: brightness(0) saturate(100%) contrast(130%);
+    opacity: 1;
+    width: 20px;
+    height: 20px;
+}
+
+/* Eliminamos background-image extra de calendario, usamos el botón a la izquierda */
+#compras-content .filter-section #compras-date,
+#ventas-content .filter-section #ventas-date { background-image: none; }
+
+.kpi-container {
+    background-color: var(--card-background);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.kpi-container h3 {
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+}
+
+#net-balance {
+    /* ya no se usa; el balance va dentro del donut */
+    display: none;
+}
+
+.chart-container-full {
+    grid-column: 1 / -1;
+    background-color: var(--card-background);
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+/* Ranking: no ocupar todo el ancho por defecto, para poder ir lado a lado con Últimos movimientos */
+#section-ranking.chart-container-full { grid-column: auto; }
+/* Fijar altura del gráfico de materiales para evitar crecimiento infinito */
+#materialTypesChart {
+    height: 340px !important;
+    width: 100% !important;
+    display: block;
+}
+
+/* Controles del gráfico de materiales */
+.material-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+.material-chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.chip-sep { width: 1px; height: 18px; background: var(--border-color); opacity: .6; display: inline-block; }
+.material-total { font-weight: 700; font-size: .9rem; color: var(--text-color); }
+body.dark-mode .material-total { color: #fff; }
+
+/* Últimos movimientos: versión compacta */
+#section-last-moves { padding: 14px; }
+#section-last-moves > h3 { 
+    font-family: var(--chart-title-font);
+    font-size: var(--chart-title-size);
+    font-weight: 700;
+    margin-bottom: 8px; 
+}
+#section-last-moves .last-moves-list { gap: 6px; max-height: 320px; overflow: auto; }
+#section-last-moves .last-move { grid-template-columns: 68px 1fr 1fr auto; padding: 6px 8px; border-radius: 6px; }
+#section-last-moves .last-move .lm-date { font-size: 0.85rem; }
+#section-last-moves .last-move .lm-who, 
+#section-last-moves .last-move .lm-mat { font-size: 0.9rem; }
+#section-last-moves .last-move .lm-neto { font-size: 0.9rem; }
+
+body.dark-mode input[type="date"] {
+    color-scheme: dark;
+    background-color: var(--card-background);
+    color: #fff; /* texto de fecha blanco en modo oscuro */
+    border: 1px solid var(--border-color);
+}
+
+/* Compras/Ventas: unificar control de fecha en filtros con variables (legible en claro/oscuro) */
+body.dark-mode .filter-section input[type="date"],
+.filter-section input[type="date"] {
+    background-color: var(--card-background);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+/* Asegurar legibilidad blanco en modo oscuro para el selector */
+body.dark-mode .dashboard-date-label,
+body.dark-mode .dashboard-date-separator {
+    color: #fff !important;
+}
+body.dark-mode .dashboard-date-input {
+    color: #fff !important;
+}
+body.dark-mode .dashboard-date-btn {
+    color: #fff !important;
+}
+
+/* Hover verde militar para el botón Actualizar en modo oscuro */
+body.dark-mode .dashboard-date-btn:hover {
+    background: var(--military-green-600);
+    border-color: var(--military-green-600);
+}
+
+/* Unificar el selector de fechas en claro/oscuro: mismos estilos (sin overrides específicos) */
+
+/* Texto blanco para títulos de Compras, Ventas y Dashboard en modo oscuro */
+body.dark-mode .table-header h2,
+body.dark-mode .table-section h2,
+body.dark-mode .main-title {
+    color: #fff !important; /* Blanco para destacar */
+}
+
+/* Texto blanco para títulos seleccionados en modo oscuro */
+body.dark-mode .table-header h2.active,
+body.dark-mode .table-section h2.active,
+body.dark-mode .main-title.active,
+body.dark-mode .tab-button.active {
+    color: #fff !important;
+    background: linear-gradient(90deg, #495f5b 60%, #3c4443 100%);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(255,255,255,0.10);
+    padding: 4px 12px;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    background: url('fondo.jpeg') no-repeat center center fixed;
+    background-size: cover;
+    opacity: 0.4;
+    pointer-events: none;
+    transition: filter 0.3s;
+}
+
+@media (prefers-color-scheme: dark) {
+    body::before {
+        filter: brightness(0.5);
+    }
+}
+
+/* --- Toasts --- */
+#toast-container {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+    pointer-events: none; /* deja pasar clicks salvo en el toast */
+}
+
+.toast {
+    min-width: 240px;
+    max-width: 80vw;
+    padding: 10px 14px;
+    border-radius: 6px;
+    color: #fff;
+    background: rgba(0,0,0,0.85);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 180ms ease, transform 180ms ease;
+    pointer-events: auto; /* clickable para cerrar */
+    font-size: 0.95rem;
+}
+
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.hide { opacity: 0; transform: translateY(8px); }
+
+.toast-success { background: #2e7d32; }
+.toast-error { background: #c62828; }
+.toast-warning { background: #ad6f00; }
+.toast-info { background: #455a64; }
+
+/* Sección de personalización del dashboard */
+.dashboard-settings {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 10px 0 6px 0;
+}
+.dashboard-settings .settings-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px 18px;
+}
+.dashboard-settings label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+}
+.btn-small { padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; }
+
+/* Mejor uso del espacio en pantallas anchas: tres columnas */
+@media (min-width: 1400px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+     /* Fila 1: Entradas | 5 días | (libre o se usa si hay más)
+         Fila 2: Últimos movimientos (1 col) | Ranking (2 cols) */
+     #section-entries { grid-column: span 1; }
+     #section-5days { grid-column: span 1; }
+     #section-last-moves { grid-column: span 1; }
+     #section-ranking { grid-column: span 2; }
+     /* Ranking un poco más alto en pantallas grandes, pero compacto */
+     #materialTypesChart { height: 360px !important; }
+}
+
+/* Botones "Nueva Compra" y "Nueva Venta" con look más estético y animación */
+.btn-add {
+    position: relative;
+    overflow: hidden; /* recorta el ripple */
+    border-radius: 10px;
+    padding: 9px 14px; /* más compacto */
+    font-size: 0.92rem; /* un poco más chico */
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    background: linear-gradient(180deg, var(--mint-600) 0%, var(--primary-color) 100%);
+    border: 1px solid var(--primary-color);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.07), inset 0 -2px 0 rgba(0,0,0,0.08);
+    transition: transform 120ms cubic-bezier(.2,.9,.2,1),
+                box-shadow 150ms ease,
+                filter 140ms ease,
+                background 140ms ease;
+}
+.btn-add i { font-size: 1rem; }
+.btn-add:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.10);
+    filter: brightness(1.02);
+}
+.btn-add:active { transform: translateY(0) scale(0.99); }
+.btn-add:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(73,95,91,0.28), 0 10px 28px rgba(0,0,0,0.12);
+}
+
+/* Ripple para .btn-add */
+.btn-add .ripple { position: absolute; border-radius: 50%; transform: scale(0); background: var(--ripple-military); pointer-events: none; animation: ripple-anim 360ms ease-out forwards; }
+
+/* Micro-bounce al hacer clic (clase añadida por JS) */
+@keyframes add-bounce { 0% { transform: scale(0.98); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
+/* bounce deshabilitado por simplicidad: no se aplica en JS */
+
+/* Color sutil diferenciado por tipo (opcional) */
+.btn-add-compra { --mint-600: #6b998c; }
+.btn-add-venta { --mint-600: #688a80; }
+
+/* Modo oscuro: mantener el mismo gradiente (ya usa variables) */
+body.dark-mode .btn-add { color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-add { transition: background 160ms ease, box-shadow 160ms ease; }
+    .btn-add:hover, .btn-add:active { transform: none; }
+    .btn-add .ripple, .btn-add.bounce { animation: none !important; }
+}
