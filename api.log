@@ -33699,3 +33699,72 @@ zipfile.BadZipFile: Truncated file header
 2025-12-05 15:32:18,689 - daily_excel_logger - INFO - Attempting to load data for date: 2025-12-05 from: daily_log.xlsx
 2025-12-05 15:32:18,753 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
 2025-12-05 15:32:18,754 - daily_excel_logger - INFO - Successfully loaded 2 Compra entries and 0 Venta entries for date 2025-12-05.
+2025-12-09 10:30:52,493 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:30:52,670 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:30:52,671 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:33:30,022 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:33:30,080 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:33:30,080 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:33:49,899 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:33:49,948 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:33:50,118 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:34:02,428 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:34:02,491 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:34:02,556 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:34:25,509 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:34:25,558 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:34:25,636 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:34:41,362 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:34:41,440 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:34:41,539 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:35:38,083 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:35:38,182 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:35:38,261 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:35:53,371 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:35:53,506 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:35:53,743 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:37:35,870 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:37:35,941 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:37:36,028 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:40:59,961 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:41:00,026 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:41:00,113 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:42:56,227 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:42:56,271 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:42:56,337 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:44:29,377 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:44:29,457 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:44:29,541 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:44:30,213 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:44:30,310 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:44:30,425 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:44:32,413 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:44:32,470 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:44:32,527 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:44:36,228 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:44:36,270 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:44:36,272 - daily_excel_logger - INFO - No sheet found for today '2025-12-09'. Returning empty data.
+2025-12-09 10:44:36,277 - daily_excel_logger - INFO - Attempting to upsert data for ID: 1, Type: Compra
+2025-12-09 10:44:36,338 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:44:36,342 - daily_excel_logger - INFO - Applied formatting to sheet '2025-12-09'
+2025-12-09 10:44:36,344 - daily_excel_logger - INFO - Created new sheet for 2025-12-09 and applied formatting.
+2025-12-09 10:44:36,345 - daily_excel_logger - INFO - Appended new row for ID 1 (Type: Compra) to sheet 2025-12-09
+2025-12-09 10:44:36,696 - daily_excel_logger - INFO - Workbook saved successfully: daily_log.xlsx
+2025-12-09 10:44:36,696 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:44:36,771 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:44:36,771 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-09 10:44:56,718 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:44:56,923 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:44:57,036 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-09 10:45:21,856 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:45:21,894 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:45:21,981 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:45:22,040 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-09 10:45:22,063 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:45:22,111 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-09 10:53:37,359 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:53:37,448 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:53:37,466 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-09 10:53:42,340 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-09 10:53:42,430 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-09 10:53:42,431 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.

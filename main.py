@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta, timezone
+import pytz
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -347,7 +348,8 @@ def calculate_importe(neto: Optional[float], precio_kg: Optional[float]) -> Opti
 def get_current_time() -> str:
     """Returns current time in HH:MM format. Maneja errores de obtención de hora."""
     try:
-        return datetime.now().strftime("%H:%M")
+        tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        return datetime.now(tz).strftime("%H:%M")
     except Exception as e:
         print(f"Error obteniendo hora actual: {e}")
         return "00:00"
@@ -355,7 +357,8 @@ def get_current_time() -> str:
 def get_current_date() -> str:
     """Returns current date in dd/mm/yy format. Maneja errores de obtención de fecha."""
     try:
-        return datetime.now().strftime("%d/%m/%y")
+        tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        return datetime.now(tz).strftime("%d/%m/%y")
     except Exception as e:
         print(f"Error obteniendo fecha actual: {e}")
         return "01/01/70"
