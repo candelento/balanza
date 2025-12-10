@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td><input type="text" class="table-input" name="observaciones" placeholder="Observaciones"></td>
             `;
 
-    // Agregar eventos para los campos numéricos
+    // Agregar eventos para los campos numéricos y cálculo instantáneo de neto
         row.querySelectorAll('.numeric-input').forEach(input => {
             input.addEventListener('input', function(e) {
                 // Permitir solo números y punto decimal
@@ -667,6 +667,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const parts = value.split('.');
                 if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
                 this.value = value;
+                
+                // Si es bruto, tara o merma, actualizar neto instantáneamente
+                const fieldName = this.getAttribute('name');
+                if (fieldName === 'bruto' || fieldName === 'tara' || fieldName === 'merma') {
+                    const brutoInput = row.querySelector('[name="bruto"]');
+                    const taraInput = row.querySelector('[name="tara"]');
+                    const mermaInput = row.querySelector('[name="merma"]');
+                    const mermaCell = mermaInput ? mermaInput.closest('td') : null;
+                    const netoCell = mermaCell ? mermaCell.nextElementSibling : null;
+                    
+                    if (netoCell && brutoInput && taraInput && mermaInput) {
+                        const bruto = parseFloat(brutoInput.value) || 0;
+                        const tara = parseFloat(taraInput.value) || 0;
+                        const merma = parseFloat(mermaInput.value) || 0;
+                        const neto = bruto - tara - merma;
+                        netoCell.textContent = neto.toFixed(2);
+                    }
+                }
             });
         });
 
@@ -941,7 +959,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td><input type="text" class="table-input" name="observaciones" value="${item.observaciones ? item.observaciones : ''}" placeholder="Observaciones"></td>
             `;
 
-            // Agregar eventos para los campos numéricos
+            // Agregar eventos para los campos numéricos y cálculo instantáneo de neto
             row.querySelectorAll('.numeric-input').forEach(input => {
                 input.addEventListener('input', function(e) {
                     // Permitir solo números y punto decimal
@@ -950,6 +968,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     const parts = value.split('.');
                     if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
                     this.value = value;
+                    
+                    // Si es bruto, tara o merma, actualizar neto instantáneamente
+                    const fieldName = this.getAttribute('name');
+                    if (fieldName === 'bruto' || fieldName === 'tara' || fieldName === 'merma') {
+                        const brutoInput = row.querySelector('[name="bruto"]');
+                        const taraInput = row.querySelector('[name="tara"]');
+                        const mermaInput = row.querySelector('[name="merma"]');
+                        const mermaCell = mermaInput ? mermaInput.closest('td') : null;
+                        const netoCell = mermaCell ? mermaCell.nextElementSibling : null;
+                        
+                        if (netoCell && brutoInput && taraInput && mermaInput) {
+                            const bruto = parseFloat(brutoInput.value) || 0;
+                            const tara = parseFloat(taraInput.value) || 0;
+                            const merma = parseFloat(mermaInput.value) || 0;
+                            const neto = bruto - tara - merma;
+                            netoCell.textContent = neto.toFixed(2);
+                        }
+                    }
                 });
             });
 
@@ -983,22 +1019,43 @@ document.addEventListener('DOMContentLoaded', function() {
         // Track last focused row for global keyboard shortcuts
         row.addEventListener('focusin', () => { lastFocusedRow = row; });
 
-        // Helper: programa un guardado de la fila respetando isUpdating (reintenta si está ocupado)
-        function scheduleRowSave(delayMs = 0) {
-            // Si hay cambios pendientes en bruto/tara, no hacer autosave
-            if (row.dataset && (row.dataset.pendingPesoChanges === '1' || row.dataset.pendingBruto === '1' || row.dataset.pendingTara === '1')) {
-                return;
+        // Helper: calcular neto instantáneamente en el frontend
+        function updateNetoInstantly() {
+            const brutoInput = row.querySelector('[name="bruto"]');
+            const taraInput = row.querySelector('[name="tara"]');
+            const mermaInput = row.querySelector('[name="merma"]');
+            
+            // Buscar la celda de neto de manera más robusta (es la celda después de merma)
+            const mermaCell = mermaInput ? mermaInput.closest('td') : null;
+            const netoCell = mermaCell ? mermaCell.nextElementSibling : null;
+            
+            if (brutoInput && taraInput && mermaInput && netoCell) {
+                const bruto = parseFloat(brutoInput.value) || 0;
+                const tara = parseFloat(taraInput.value) || 0;
+                const merma = parseFloat(mermaInput.value) || 0;
+                const neto = bruto - tara - merma;
+                
+                // Actualizar visual instantáneamente
+                netoCell.textContent = neto.toFixed(2);
+                
+                // Marcar que se actualizó (para debug)
+                netoCell.style.fontWeight = 'bold';
+                setTimeout(() => { netoCell.style.fontWeight = ''; }, 300);
             }
+        }
+
+        // Helper: programa un guardado de la fila respetando isUpdating (reintenta si está ocupado)
+        function scheduleRowSave(delayMs = 0, forceSilent = false) {
             if (autosaveTimers.has(row)) {
                 clearTimeout(autosaveTimers.get(row));
             }
             const timer = setTimeout(() => {
                 // Si hay un guardado en curso, reintentar pronto
                 if (isUpdating) {
-                    scheduleRowSave(250);
+                    scheduleRowSave(250, forceSilent);
                     return;
                 }
-                window.guardarFila(row, { silent: true, explicit: false });
+                window.guardarFila(row, { silent: forceSilent, explicit: false });
                 autosaveTimers.delete(row);
             }, delayMs);
             autosaveTimers.set(row, timer);
@@ -1007,38 +1064,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const inputs = Array.from(row.querySelectorAll('.table-input'));
         inputs.forEach(input => {
             const name = input.getAttribute('name');
-            // Guardado en tiempo real mientras se escribe (debounce por fila)
+            
+            // Guardado en tiempo real mientras se escribe
             input.addEventListener('input', () => {
-                // Si se modifica bruto o tara, marcar cambios pendientes y no autosave
-                if (name === 'bruto' || name === 'tara') {
-                    // Cancelar cualquier autosave pendiente
-                    if (autosaveTimers.has(row)) {
-                        clearTimeout(autosaveTimers.get(row));
-                        autosaveTimers.delete(row);
-                    }
+                // Para bruto, tara y merma: calcular neto instantáneamente y autoguardar
+                if (name === 'bruto' || name === 'tara' || name === 'merma') {
+                    // Calcular y mostrar neto inmediatamente (sin esperar al servidor)
+                    updateNetoInstantly();
+                    
+                    // Limpiar flags de cambios pendientes
                     if (row.dataset) {
-                        row.dataset.pendingPesoChanges = '1';
-                        if (name === 'bruto') row.dataset.pendingBruto = '1';
-                        if (name === 'tara') row.dataset.pendingTara = '1';
+                        delete row.dataset.pendingPesoChanges;
+                        delete row.dataset.pendingBruto;
+                        delete row.dataset.pendingTara;
                     }
+                    
+                    // Guardar automáticamente después de 800ms de inactividad (espera a que termines de escribir)
+                    scheduleRowSave(800, true); // 800ms debounce, silent=true
                     return;
                 }
                 // Debounce 600ms y programar guardado para otros campos
                 scheduleRowSave(600);
             });
+            
             // On focusout we trigger a debounced save for the whole row
             input.addEventListener('focusout', (e) => {
                 // If the new focused element is still inside the same row, skip
                 const related = e.relatedTarget || document.activeElement;
                 if (related && row.contains(related)) return;
 
-                // Si el campo es bruto o tara, no autosave y marcar pendiente
-                if (name === 'bruto' || name === 'tara') {
+                // Para bruto, tara y merma: calcular neto y guardar inmediatamente al salir del campo
+                if (name === 'bruto' || name === 'tara' || name === 'merma') {
+                    // Calcular neto instantáneamente
+                    updateNetoInstantly();
+                    // Limpiar flags
                     if (row.dataset) {
-                        row.dataset.pendingPesoChanges = '1';
-                        if (name === 'bruto') row.dataset.pendingBruto = '1';
-                        if (name === 'tara') row.dataset.pendingTara = '1';
+                        delete row.dataset.pendingPesoChanges;
+                        delete row.dataset.pendingBruto;
+                        delete row.dataset.pendingTara;
                     }
+                    // Guardar inmediatamente al salir del campo (200ms para evitar conflictos)
+                    scheduleRowSave(200, true);
                     return;
                 }
 
@@ -1049,16 +1115,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Teclas: Enter no guarda; F8 se maneja globalmente
             input.addEventListener('keydown', (ev) => {
                 if (ev.key === 'Enter') {
-                    // Evitar submit y NO guardar con Enter
+                    // Evitar submit
                     ev.preventDefault();
-                    // Si se está en bruto/tara, marcar pendiente (por si el usuario navega con Enter)
-                    if (name === 'bruto' || name === 'tara') {
-                        if (row.dataset) {
-                            row.dataset.pendingPesoChanges = '1';
-                            if (name === 'bruto') row.dataset.pendingBruto = '1';
-                            if (name === 'tara') row.dataset.pendingTara = '1';
-                        }
-                    }
                 }
             });
         });

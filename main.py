@@ -21,6 +21,19 @@ import subprocess
 from pdf_generator import crear_pdf_recibo, generar_planilla
 import daily_excel_logger # Import the new logger module
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()  # This loads the .env file
+
+# Google Drive integration
+try:
+    import google_drive_helper
+    GOOGLE_DRIVE_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠ Google Drive no disponible: {e}")
+    GOOGLE_DRIVE_AVAILABLE = False
+    google_drive_helper = None
+
 # webbrowser will be used only when running the app directly (not at import time)
 
 # --- Load Product Configuration ---
@@ -169,6 +182,22 @@ class VentaUpdate(BasePesada):
 
 app = FastAPI()
 
+# --- Google Drive Configuration ---
+# Configuración de Google Drive (se activa con variable de entorno)
+ENABLE_GOOGLE_DRIVE = os.getenv("ENABLE_GOOGLE_DRIVE", "false").lower() == "true"
+
+if ENABLE_GOOGLE_DRIVE and GOOGLE_DRIVE_AVAILABLE:
+    try:
+        google_drive_helper.init_google_drive()
+        print("✓ Google Drive habilitado y configurado")
+    except Exception as e:
+        print(f"⚠ Google Drive no pudo inicializarse: {e}")
+        ENABLE_GOOGLE_DRIVE = False
+else:
+    if ENABLE_GOOGLE_DRIVE and not GOOGLE_DRIVE_AVAILABLE:
+        print("⚠ Google Drive está habilitado pero PyDrive2 no está instalado")
+        ENABLE_GOOGLE_DRIVE = False
+
 # --- CORS Configuration ---
 # This should be one of the first middleware added
 app.add_middleware(
@@ -305,20 +334,102 @@ def has_role(required_roles: List[str]):
     return role_checker
 
 
+# --- Global Counter Management ---
+COUNTERS_FILE = "counters.json"
+
+def load_counters():
+    """Carga los contadores globales desde el archivo JSON"""
+    try:
+        if os.path.exists(COUNTERS_FILE):
+            with open(COUNTERS_FILE, 'r', encoding='utf-8') as f:
+                counters = json.load(f)
+                return {
+                    "compra_counter": counters.get("compra_counter", 0),
+                    "venta_counter": counters.get("venta_counter", 0),
+                    "last_ticket_id": counters.get("last_ticket_id", 0)
+                }
+    except Exception as e:
+        print(f"Error cargando contadores: {e}")
+    return {"compra_counter": 0, "venta_counter": 0, "last_ticket_id": 0}
+
+def save_counters(compra_counter, venta_counter):
+    """Guarda los contadores globales en el archivo JSON"""
+    try:
+        counters = {
+            "compra_counter": compra_counter,
+            "venta_counter": venta_counter,
+            "last_ticket_id": max(compra_counter, venta_counter)  # Mantener compatibilidad
+        }
+        with open(COUNTERS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(counters, f, indent=2)
+    except Exception as e:
+        print(f"Error guardando contadores: {e}")
+
+def get_next_compra_id():
+    """Obtiene el siguiente ID global para compras"""
+    global compra_counter
+    compra_counter += 1
+    save_counters(compra_counter, venta_counter)
+    return compra_counter
+
+def get_next_venta_id():
+    """Obtiene el siguiente ID global para ventas"""
+    global venta_counter
+    venta_counter += 1
+    save_counters(compra_counter, venta_counter)
+    return venta_counter
+
 # --- Load data from Excel on startup (DEPRECATED) ---
 # No longer loading all data into memory on startup.
 # Data will be read from the specific sheet on each request.
 compras_entries: Dict[int, Dict[str, Any]] = {} # Keep for now for write operations
 ventas_entries: Dict[int, Dict[str, Any]] = {} # Keep for now for write operations
-compra_counter = 0
-venta_counter = 0
+
+# Cargar contadores globales
+counters = load_counters()
+compra_counter = counters["compra_counter"]
+venta_counter = counters["venta_counter"]
+
+# Verificar IDs máximos en el Excel para asegurar que no haya conflictos
+try:
+    import openpyxl
+    if os.path.exists("daily_log.xlsx"):
+        wb = openpyxl.load_workbook("daily_log.xlsx", read_only=True)
+        max_compra_id = compra_counter
+        max_venta_id = venta_counter
+        
+        # Escanear todas las hojas para encontrar el ID máximo
+        for sheet_name in wb.sheetnames:
+            if sheet_name.startswith("20"):  # Hojas de fechas
+                ws = wb[sheet_name]
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if row[0] and row[1]:  # ID y Tipo
+                        entry_id = int(row[0])
+                        entry_type = row[1]
+                        if entry_type == "Compra" and entry_id > max_compra_id:
+                            max_compra_id = entry_id
+                        elif entry_type == "Venta" and entry_id > max_venta_id:
+                            max_venta_id = entry_id
+        
+        wb.close()
+        
+        # Actualizar contadores si encontramos IDs mayores
+        if max_compra_id > compra_counter or max_venta_id > venta_counter:
+            compra_counter = max_compra_id
+            venta_counter = max_venta_id
+            save_counters(compra_counter, venta_counter)
+            print(f"Contadores actualizados desde Excel: Compra={compra_counter}, Venta={venta_counter}")
+        else:
+            print(f"Contadores globales cargados: Compra={compra_counter}, Venta={venta_counter}")
+except Exception as e:
+    print(f"Error escaneando IDs del Excel: {e}")
+    print(f"Usando contadores del archivo: Compra={compra_counter}, Venta={venta_counter}")
+
 try:
     # We can still load today's data for write operations to work temporarily
     daily_data = daily_excel_logger.load_daily_data()
     compras_entries = {entry["id"]: entry for entry in daily_data.get("Compra", []) if entry.get("id") is not None}
     ventas_entries = {entry["id"]: entry for entry in daily_data.get("Venta", []) if entry.get("id") is not None}
-    compra_counter = max(compras_entries.keys()) if compras_entries else 0
-    venta_counter = max(ventas_entries.keys()) if ventas_entries else 0
     print(f"Loaded today's data for write operations: {len(compras_entries)} compras, {len(ventas_entries)} ventas.")
 except Exception as e:
     print(f"Could not preload today's data for write operations: {e}")
@@ -435,6 +546,40 @@ def get_daily_backup_folder_for_today() -> str:
     except Exception as e:
         print(f"Error creando/accediendo a carpeta de backup diario: {e}")
         return os.path.join("Daily_BackUp", "error")
+
+
+def find_entry_by_id(entry_id: int, entry_type: str):
+    """
+    Busca un registro por ID en todas las hojas del Excel.
+    Retorna una tupla (entry_dict, date_str) o (None, None) si no se encuentra.
+    """
+    try:
+        import openpyxl
+        if not os.path.exists("daily_log.xlsx"):
+            return None, None
+        
+        wb = openpyxl.load_workbook("daily_log.xlsx", read_only=True)
+        
+        # Buscar en todas las hojas de fechas
+        for sheet_name in wb.sheetnames:
+            if sheet_name.startswith("20"):  # Hojas con formato YYYY-MM-DD
+                try:
+                    entries = daily_excel_logger.load_data_by_date(sheet_name)
+                    entries_of_type = entries.get(entry_type, [])
+                    
+                    for entry in entries_of_type:
+                        if int(entry.get("id", -1)) == int(entry_id):
+                            wb.close()
+                            return entry, sheet_name
+                except Exception as e:
+                    print(f"Error buscando en hoja {sheet_name}: {e}")
+                    continue
+        
+        wb.close()
+        return None, None
+    except Exception as e:
+        print(f"Error buscando entry ID {entry_id} tipo {entry_type}: {e}")
+        return None, None
 
 
 def _ensure_sumatrapdf():
@@ -761,19 +906,10 @@ async def read_compras_entries(
 @app.post("/compras", response_model=Compra)
 async def create_compra_entry(compra_data: Compra, current_user: UserInDB = Depends(has_role(["admin"]))):
     """Create a new compra entry. This will always be for the CURRENT day."""
-    global compra_counter, compras_entries
+    global compras_entries
 
-    # --- Recalculate counter based on current day's sheet to avoid ID conflicts ---
-    try:
-        todays_data = daily_excel_logger.load_daily_data()
-        todays_compras = {entry["id"]: entry for entry in todays_data.get("Compra", []) if entry.get("id") is not None}
-        compra_counter = max(todays_compras.keys()) if todays_compras else 0
-    except Exception as e:
-        print(f"Could not recalculate compra_counter, defaulting to in-memory. Error: {e}")
-    # --- End recalculation ---
-
-    compra_counter += 1
-    new_id = compra_counter # Use simple integer ID
+    # Obtener siguiente ID global único
+    new_id = get_next_compra_id()
     compra_data.id = new_id
     compra_data.fecha = get_current_date()
     current_time = get_current_time()
@@ -986,7 +1122,7 @@ async def imprimir_compra_pdf(compra_id: int, copies: int = 2, date: Optional[st
     if compra_id in compras_entries:
         datos = [compras_entries[compra_id]]
     else:
-        # If a date was provided, try to load the entry from that date's sheet
+        # Si se proporcionó una fecha, buscar en esa fecha específica
         if date:
             try:
                 entries = daily_excel_logger.load_data_by_date(date)
@@ -995,15 +1131,17 @@ async def imprimir_compra_pdf(compra_id: int, copies: int = 2, date: Optional[st
                 if found:
                     datos = [found]
                     should_upsert = False  # Do not upsert when printing historical record
-                else:
-                    raise HTTPException(status_code=404, detail="Compra no encontrada en la fecha solicitada")
-            except HTTPException:
-                raise
             except Exception as e:
                 print(f"Error cargando Compra {compra_id} para la fecha {date}: {e}")
-                raise HTTPException(status_code=500, detail=f"Error cargando datos: {e}")
-        else:
-            raise HTTPException(status_code=404, detail="Compra no encontrada")
+        
+        # Si no se encontró con fecha específica o no se proporcionó fecha, buscar en todas las fechas
+        if datos is None:
+            entry, entry_date = find_entry_by_id(compra_id, "Compra")
+            if entry:
+                datos = [entry]
+                should_upsert = False
+            else:
+                raise HTTPException(status_code=404, detail=f"Compra con ID {compra_id} no encontrada")
 
     # If this is today's record and we have it in memory, ensure it's saved before printing
     if should_upsert and datos and compra_id in compras_entries:
@@ -1081,10 +1219,13 @@ async def guardar_compra_pdf(compra_id: int, date: Optional[str] = None, current
     """Generate and save PDF for a specific compra entry."""
     datos = None
     should_upsert = True
+    found_date = None
 
     if compra_id in compras_entries:
         datos = [compras_entries[compra_id]]
+        found_date = datetime.now().strftime("%Y-%m-%d")
     else:
+        # Si se proporcionó una fecha, buscar en esa fecha específica
         if date:
             try:
                 entries = daily_excel_logger.load_data_by_date(date)
@@ -1092,16 +1233,20 @@ async def guardar_compra_pdf(compra_id: int, date: Optional[str] = None, current
                 found = next((e for e in compras_for_date if int(e.get("id")) == int(compra_id)), None)
                 if found:
                     datos = [found]
+                    found_date = date
                     should_upsert = False
-                else:
-                    raise HTTPException(status_code=404, detail="Compra no encontrada en la fecha solicitada")
-            except HTTPException:
-                raise
             except Exception as e:
                 print(f"Error cargando Compra {compra_id} para la fecha {date}: {e}")
-                raise HTTPException(status_code=500, detail=f"Error cargando datos: {e}")
-        else:
-            raise HTTPException(status_code=404, detail="Compra no encontrada")
+        
+        # Si no se encontró con fecha específica o no se proporcionó fecha, buscar en todas las fechas
+        if datos is None:
+            entry, entry_date = find_entry_by_id(compra_id, "Compra")
+            if entry:
+                datos = [entry]
+                found_date = entry_date
+                should_upsert = False
+            else:
+                raise HTTPException(status_code=404, detail=f"Compra con ID {compra_id} no encontrada")
 
     # If it's today's entry and in-memory, try to ensure saved to Excel
     if should_upsert and datos and compra_id in compras_entries:
@@ -1133,9 +1278,9 @@ async def guardar_compra_pdf(compra_id: int, date: Optional[str] = None, current
             print(f"Error saving Compra {compra_id} before generating PDF: {e}")
             raise HTTPException(status_code=500, detail=_format_save_error(e))
 
-    # Define the directory and filename
-    if date and not should_upsert:
-        save_dir = get_pesadas_folder_for_date(date)
+    # Define the directory and filename usando la fecha encontrada
+    if found_date:
+        save_dir = get_pesadas_folder_for_date(found_date)
     else:
         save_dir = get_daily_pesadas_folder()
 
@@ -1143,6 +1288,19 @@ async def guardar_compra_pdf(compra_id: int, date: Optional[str] = None, current
 
     try:
         crear_pdf_recibo(datos, filename, tipo_recibo="Compra")
+        
+        # **NUEVO: Subir a Google Drive si está habilitado**
+        if ENABLE_GOOGLE_DRIVE and google_drive_helper and google_drive_helper.gdrive_manager:
+            try:
+                if found_date:
+                    dt = datetime.strptime(found_date, "%Y-%m-%d")
+                    date_folder = dt.strftime("%d-%m-%Y")  # Convert to dd-mm-YYYY
+                else:
+                    date_folder = datetime.now().strftime("%d-%m-%Y")
+                
+                google_drive_helper.upload_to_drive(filename, folder_type="pesadas", subfolder=date_folder)
+            except Exception as gd_error:
+                print(f"⚠ Error al subir compra a Google Drive: {gd_error}")
         
         return JSONResponse(content={"status": "success", "message": f"Ticket guardado en {filename}"})
 
@@ -1186,19 +1344,10 @@ async def read_ventas_entries(
 @app.post("/ventas", response_model=Venta)
 async def create_venta_entry(venta_data: Venta, current_user: UserInDB = Depends(has_role(["admin"]))):
     """Create a new venta entry. This will always be for the CURRENT day."""
-    global venta_counter, ventas_entries
+    global ventas_entries
 
-    # --- Recalculate counter based on current day's sheet to avoid ID conflicts ---
-    try:
-        todays_data = daily_excel_logger.load_daily_data()
-        todays_ventas = {entry["id"]: entry for entry in todays_data.get("Venta", []) if entry.get("id") is not None}
-        venta_counter = max(todays_ventas.keys()) if todays_ventas else 0
-    except Exception as e:
-        print(f"Could not recalculate venta_counter, defaulting to in-memory. Error: {e}")
-    # --- End recalculation ---
-
-    venta_counter += 1
-    new_id = venta_counter # Use simple integer ID
+    # Obtener siguiente ID global único
+    new_id = get_next_venta_id()
     venta_data.id = new_id
     venta_data.fecha = get_current_date()
     current_time = get_current_time()
@@ -1455,6 +1604,7 @@ async def imprimir_venta_pdf(venta_id: int, copies: int = 2, date: Optional[str]
     if venta_id in ventas_entries:
         datos = [ventas_entries[venta_id]]
     else:
+        # Si se proporcionó una fecha, buscar en esa fecha específica
         if date:
             try:
                 entries = daily_excel_logger.load_data_by_date(date)
@@ -1463,15 +1613,17 @@ async def imprimir_venta_pdf(venta_id: int, copies: int = 2, date: Optional[str]
                 if found:
                     datos = [found]
                     should_upsert = False
-                else:
-                    raise HTTPException(status_code=404, detail="Venta no encontrada en la fecha solicitada")
-            except HTTPException:
-                raise
             except Exception as e:
                 print(f"Error cargando Venta {venta_id} para la fecha {date}: {e}")
-                raise HTTPException(status_code=500, detail=f"Error cargando datos: {e}")
-        else:
-            raise HTTPException(status_code=404, detail="Venta no encontrada")
+        
+        # Si no se encontró con fecha específica o no se proporcionó fecha, buscar en todas las fechas
+        if datos is None:
+            entry, entry_date = find_entry_by_id(venta_id, "Venta")
+            if entry:
+                datos = [entry]
+                should_upsert = False
+            else:
+                raise HTTPException(status_code=404, detail=f"Venta con ID {venta_id} no encontrada")
 
     # If this is today's record and we have it in memory, ensure it's saved before printing
     if should_upsert and datos and venta_id in ventas_entries:
@@ -1549,10 +1701,13 @@ async def guardar_venta_pdf(venta_id: int, date: Optional[str] = None, current_u
     """Generate and save PDF for a specific venta entry. Accepts optional `date` (YYYY-MM-DD) for historical records."""
     datos = None
     should_upsert = True
+    found_date = None
 
     if venta_id in ventas_entries:
         datos = [ventas_entries[venta_id]]
+        found_date = datetime.now().strftime("%Y-%m-%d")
     else:
+        # Si se proporcionó una fecha, buscar en esa fecha específica
         if date:
             try:
                 entries = daily_excel_logger.load_data_by_date(date)
@@ -1560,16 +1715,20 @@ async def guardar_venta_pdf(venta_id: int, date: Optional[str] = None, current_u
                 found = next((e for e in ventas_for_date if int(e.get("id")) == int(venta_id)), None)
                 if found:
                     datos = [found]
+                    found_date = date
                     should_upsert = False
-                else:
-                    raise HTTPException(status_code=404, detail="Venta no encontrada en la fecha solicitada")
-            except HTTPException:
-                raise
             except Exception as e:
                 print(f"Error cargando Venta {venta_id} para la fecha {date}: {e}")
-                raise HTTPException(status_code=500, detail=f"Error cargando datos: {e}")
-        else:
-            raise HTTPException(status_code=404, detail="Venta no encontrada")
+        
+        # Si no se encontró con fecha específica o no se proporcionó fecha, buscar en todas las fechas
+        if datos is None:
+            entry, entry_date = find_entry_by_id(venta_id, "Venta")
+            if entry:
+                datos = [entry]
+                found_date = entry_date
+                should_upsert = False
+            else:
+                raise HTTPException(status_code=404, detail=f"Venta con ID {venta_id} no encontrada")
 
     # If it's today's entry and in-memory, try to ensure saved to Excel
     if should_upsert and datos and venta_id in ventas_entries:
@@ -1601,9 +1760,9 @@ async def guardar_venta_pdf(venta_id: int, date: Optional[str] = None, current_u
             print(f"Error saving Venta {venta_id} before generating PDF: {e}")
             raise HTTPException(status_code=500, detail=_format_save_error(e))
 
-    # Define the directory and filename
-    if date and not should_upsert:
-        save_dir = get_pesadas_folder_for_date(date)
+    # Define the directory and filename usando la fecha encontrada
+    if found_date:
+        save_dir = get_pesadas_folder_for_date(found_date)
     else:
         save_dir = get_daily_pesadas_folder()
 
@@ -1611,6 +1770,19 @@ async def guardar_venta_pdf(venta_id: int, date: Optional[str] = None, current_u
 
     try:
         crear_pdf_recibo(datos, filename, tipo_recibo="Venta")
+        
+        # **NUEVO: Subir a Google Drive si está habilitado**
+        if ENABLE_GOOGLE_DRIVE and google_drive_helper and google_drive_helper.gdrive_manager:
+            try:
+                if found_date:
+                    dt = datetime.strptime(found_date, "%Y-%m-%d")
+                    date_folder = dt.strftime("%d-%m-%Y")
+                else:
+                    date_folder = datetime.now().strftime("%d-%m-%Y")
+                
+                google_drive_helper.upload_to_drive(filename, folder_type="pesadas", subfolder=date_folder)
+            except Exception as gd_error:
+                print(f"⚠ Error al subir venta a Google Drive: {gd_error}")
         
         return JSONResponse(content={"status": "success", "message": f"Ticket guardado en {filename}"})
 
@@ -1868,6 +2040,14 @@ async def guardar_planilla_completa(current_user: UserInDB = Depends(has_role(["
         planilla_filepath = os.path.join(planilla_base_folder, desired_filename)
 
         generar_planilla(todos_datos, planilla_filepath)
+
+        # **NUEVO: Subir a Google Drive si está habilitado**
+        if ENABLE_GOOGLE_DRIVE and google_drive_helper and google_drive_helper.gdrive_manager:
+            try:
+                date_folder = datetime.now().strftime("%d-%m-%Y")
+                google_drive_helper.upload_to_drive(planilla_filepath, folder_type="planillas", subfolder=date_folder)
+            except Exception as gd_error:
+                print(f"⚠ Error al subir planilla a Google Drive: {gd_error}")
 
         return {"status": "success", "message": "Planilla guardada", "path": planilla_filepath, "filename": desired_filename}
     except Exception as e:
@@ -2155,6 +2335,14 @@ async def create_backup(current_user: UserInDB = Depends(has_role(["admin", "lec
         # Copy the file
         import shutil
         shutil.copy2("daily_log.xlsx", backup_path)
+
+        # **NUEVO: Subir a Google Drive si está habilitado**
+        if ENABLE_GOOGLE_DRIVE and google_drive_helper and google_drive_helper.gdrive_manager:
+            try:
+                date_folder = datetime.now().strftime("%d-%m-%Y")
+                google_drive_helper.upload_to_drive(backup_path, folder_type="backups", subfolder=date_folder)
+            except Exception as gd_error:
+                print(f"⚠ Error al subir backup a Google Drive: {gd_error}")
 
         return {"status": "success", "message": f"Backup created: {os.path.join(backup_folder, backup_filename)}"}
 

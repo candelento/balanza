@@ -161,11 +161,27 @@ def _get_or_create_daily_sheet(workbook):
     return sheet
 
 def _save_workbook(workbook, filename):
-    """Saves the workbook."""
+    """Saves the workbook and uploads to Google Drive if enabled."""
     logger.debug(f"Attempting to save workbook: {filename}")
     try:
         workbook.save(filename)
         logger.info(f"Workbook saved successfully: {filename}")
+        
+        # **NUEVO: Subir a Google Drive después de guardar**
+        try:
+            import os
+            from datetime import datetime
+            # Importar google_drive_helper si está disponible
+            ENABLE_GOOGLE_DRIVE = os.getenv("ENABLE_GOOGLE_DRIVE", "false").lower() == "true"
+            if ENABLE_GOOGLE_DRIVE:
+                import google_drive_helper
+                if google_drive_helper and google_drive_helper.gdrive_manager:
+                    date_folder = datetime.now().strftime("%d-%m-%Y")
+                    google_drive_helper.upload_to_drive(filename, folder_type="backups", subfolder=date_folder)
+                    logger.info(f"📤 Archivo {filename} subido a Google Drive en Daily_BackUp/{date_folder}/")
+        except Exception as gd_error:
+            logger.warning(f"⚠ No se pudo subir {filename} a Google Drive: {gd_error}")
+            
     except Exception as e:
         logger.error(f"Error saving workbook '{filename}': {e}", exc_info=True)
 
