@@ -1482,10 +1482,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 
-                // Open PDF in new window
+                // Open PDF in new window and trigger print dialog
                 const printWindow = window.open(url, '_blank');
                 if (printWindow) {
-                    showToast(`PDF abierto en nueva ventana. Por favor imprima ${copiesRequested} copia(s).`, 'success', 5000);
+                    printWindow.onload = () => {
+                        printWindow.focus();
+                        printWindow.print();
+                    };
+                    showToast(`Ventana de impresión abierta. Imprima ${copiesRequested} copia(s).`, 'success', 5000);
                 } else {
                     // If popup was blocked, trigger download
                     const a = document.createElement('a');
@@ -1902,7 +1906,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 connectWebSocket();
 
                 // Update UI based on user role
-                updateUIBasedOnRole();
+                // updateUIBasedOnRole(); // TODO: Implement this function if needed
 
                 // Set default dates for filters
                 setDefaultDates();
@@ -1939,26 +1943,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handlePlanillaPrint(btn, endpoint) {
         if (!btn) return; // Safety check
+        
+        // Prevent double-clicks: if button is already disabled, return immediately
+        if (btn.disabled) {
+            console.log('[DEBUG] Button already disabled, ignoring click');
+            return;
+        }
 
         btn.disabled = true;
         const originalButtonContent = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Imprimiendo...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando PDF...';
 
-        console.log(`Attempting to print planilla at endpoint: ${endpoint}`);
+        console.log(`[DEBUG] Attempting to print planilla at endpoint: ${endpoint}`);
+
+        // Helper to restore button state
+        const restoreButton = () => {
+            console.log('[DEBUG] Restoring button state');
+            btn.disabled = false;
+            btn.innerHTML = originalButtonContent;
+        };
+
+        // Safety timeout to restore button after 10 seconds no matter what
+        const safetyTimeout = setTimeout(() => {
+            console.warn('[DEBUG] Safety timeout reached - forcing button restore');
+            restoreButton();
+        }, 10000);
 
         try {
             const token = getToken();
             if (!token) {
+                console.log('[DEBUG] No token found');
+                if (printWindow) printWindow.close();
                 showToast("Debe iniciar sesión para imprimir planillas.", 'error');
+                clearTimeout(safetyTimeout);
+                restoreButton();
                 return;
             }
 
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, { // Prepend API_BASE_URL
+            console.log('[DEBUG] Fetching PDF from server...');
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}` // Include token
+                    'Authorization': `Bearer ${token}`
                 }
             });
+
+            console.log('[DEBUG] Response received, status:', response.status);
 
             if (!response.ok) {
                 let errorDetail = `Error del servidor (${response.status})`;
@@ -1969,19 +1999,69 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorDetail = response.statusText || errorDetail;
                     console.warn("La respuesta de error del servidor no es JSON válido.");
                 }
+                if (printWindow) printWindow.close();
+                clearTimeout(safetyTimeout);
+                restoreButton();
                 throw new Error(errorDetail);
             }
 
-            const result = await response.json();
-            console.log(`Respuesta del servidor (impresión planilla ${endpoint}):`, result);
-            showToast(`Planilla enviada a imprimir.`, 'success');
+            // Check if the response is a PDF (VPS/Linux behavior)
+            const contentType = response.headers.get('content-type');
+            console.log('[DEBUG] Content-Type:', contentType);
+            
+            if (contentType && contentType.includes('application/pdf')) {
+                // Server returned a PDF - display it in the opened window
+                console.log('[DEBUG] PDF received, creating blob...');
+                const blob = await response.blob();
+                console.log('[DEBUG] Blob created, size:', blob.size);
+                const url = window.URL.createObjectURL(blob);
+                console.log('[DEBUG] Object URL created');
+                
+                // Clear safety timeout since we're handling it properly
+                clearTimeout(safetyTimeout);
+                
+                // Restore button immediately since PDF is ready
+                restoreButton();
+                
+                // Open PDF directly with the blob URL
+                console.log('[DEBUG] Opening PDF in new window');
+                const win = window.open(url, '_blank');
+                
+                if (win) {
+                    win.onload = () => {
+                        console.log('[DEBUG] PDF loaded, focusing and triggering print');
+                        win.focus();
+                        win.print();
+                    };
+                    showToast('Ventana de impresión abierta. Presione Aceptar para imprimir.', 'success');
+                    
+                    // Clean up the URL after a delay
+                    setTimeout(() => {
+                        console.log('[DEBUG] Cleaning up object URL');
+                        window.URL.revokeObjectURL(url);
+                    }, 30000);
+                } else {
+                    console.log('[DEBUG] Window was blocked by popup blocker');
+                    showToast('Por favor permita ventanas emergentes para imprimir.', 'warning');
+                    setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+                }
+            } else {
+                // Server returned JSON (Windows behavior - direct printing succeeded)
+                console.log('[DEBUG] JSON response received');
+                if (printWindow) printWindow.close();
+                const result = await response.json();
+                console.log('[DEBUG] Result:', result);
+                clearTimeout(safetyTimeout);
+                restoreButton();
+                showToast(result.message || 'Planilla enviada a imprimir.', 'success');
+            }
 
         } catch (error) {
-            console.error(`Error al solicitar la impresión de la planilla (${endpoint}):`, error);
+            console.error('[DEBUG] Error:', error);
+            if (printWindow && !printWindow.closed) printWindow.close();
+            clearTimeout(safetyTimeout);
+            restoreButton();
             showToast(`No se pudo imprimir la planilla: ${error.message}`, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalButtonContent;
         }
     }
 

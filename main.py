@@ -1623,7 +1623,7 @@ async def guardar_venta_pdf(venta_id: int, date: Optional[str] = None, current_u
 # --- Endpoint for Printing Complete Report ---
 @app.get("/imprimir/todo")
 async def imprimir_planilla_completa(current_user: UserInDB = Depends(has_role(["admin", "lect"]))):
-    """Generate a complete PDF report with both compras and ventas."""
+    """Generate and return a complete PDF report with both compras and ventas for client-side viewing/printing."""
     # Prepare data combining both compras and ventas
     compras_data = [{"tipo": "Compra", **entry} for entry in compras_entries.values()]
     ventas_data = [{"tipo": "Venta", **entry} for entry in ventas_entries.values()]
@@ -1632,33 +1632,133 @@ async def imprimir_planilla_completa(current_user: UserInDB = Depends(has_role([
     # Sort by date and time
     todos_datos.sort(key=lambda x: (x.get("fecha") or "", x.get("hora_ingreso") or ""), reverse=True)
 
-    # Generate PDF in temp directory
-    temp_pdf = os.path.join(tempfile.gettempdir(), f"planilla_unificada_{datetime.now().timestamp()}.pdf")
+    # Generate PDF in Planilla directory for persistence
     try:
-        generar_planilla(todos_datos, temp_pdf)
-        # Print the document (Windows only - fallback to error if unavailable)
-        try:
-            _try_print_file_windows(temp_pdf)
-            await asyncio.sleep(3)  # Give time for the print job to start
-        except Exception as e:
-            print(f"Printing failed for complete report: {e}")
-            raise HTTPException(status_code=500, detail=f"Error al imprimir planilla completa: {e}")
+        planilla_folder = get_planilla_folder_for_today()
+        filename = os.path.join(planilla_folder, f"planilla_completa_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
+        print(f"DEBUG: Generando planilla completa en: {filename}")
         
-        return JSONResponse(content={
-            "status": "success",
-            "message": "Documento enviado a imprimir"
-        })
+        generar_planilla(todos_datos, filename)
+        print(f"DEBUG: Planilla generada exitosamente")
+        
+        # On Windows, try to print directly
+        if platform.system() == "Windows":
+            print(f"DEBUG: Intentando imprimir planilla completa")
+            try:
+                _try_print_file_windows(filename, copies=1)
+                print(f"DEBUG: Planilla enviada a impresora")
+                return JSONResponse(content={"status": "success", "message": "Planilla guardada en Planilla/ e impresa"})
+            except Exception as print_error:
+                print(f"WARN: Error al imprimir, devolviendo PDF: {print_error}")
+        
+        # On Linux or if Windows printing failed, return PDF to browser
+        print(f"DEBUG: Devolviendo PDF al navegador para visualización/impresión")
+        return FileResponse(
+            path=filename,
+            media_type="application/pdf",
+            filename=f"planilla_completa.pdf",
+            headers={
+                "Content-Disposition": f"inline; filename=planilla_completa.pdf"
+            }
+        )
     except Exception as e:
         # Log the error and raise an HTTPException
-        print(f"Error generating or printing complete report: {e}")
+        print(f"ERROR generating PDF for complete report: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generando PDF: {str(e)}")
-    finally:
-        # Cleanup temp file
-        if os.path.exists(temp_pdf):
+
+
+@app.get("/imprimir/compras")
+async def imprimir_planilla_compras(current_user: UserInDB = Depends(has_role(["admin", "lect"]))):
+    """Generate and return a PDF report with only compras for client-side viewing/printing."""
+    # Prepare data with only compras
+    compras_data = [{"tipo": "Compra", **entry} for entry in compras_entries.values()]
+
+    # Sort by date and time
+    compras_data.sort(key=lambda x: (x.get("fecha") or "", x.get("hora_ingreso") or ""), reverse=True)
+
+    # Generate PDF in Planilla directory for persistence
+    try:
+        planilla_folder = get_planilla_folder_for_today()
+        filename = os.path.join(planilla_folder, f"planilla_compras_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
+        print(f"DEBUG: Generando planilla de compras en: {filename}")
+        
+        generar_planilla(compras_data, filename)
+        print(f"DEBUG: Planilla de compras generada exitosamente")
+        
+        # On Windows, try to print directly
+        if platform.system() == "Windows":
+            print(f"DEBUG: Intentando imprimir planilla de compras")
             try:
-                os.remove(temp_pdf)
-            except Exception as e:
-                print(f"Error limpiando archivo temporal: {e}")
+                _try_print_file_windows(filename, copies=1)
+                print(f"DEBUG: Planilla enviada a impresora")
+                return JSONResponse(content={"status": "success", "message": "Planilla de compras guardada en Planilla/ e impresa"})
+            except Exception as print_error:
+                print(f"WARN: Error al imprimir, devolviendo PDF: {print_error}")
+        
+        # On Linux or if Windows printing failed, return PDF to browser
+        print(f"DEBUG: Devolviendo PDF al navegador para visualización/impresión")
+        return FileResponse(
+            path=filename,
+            media_type="application/pdf",
+            filename=f"planilla_compras.pdf",
+            headers={
+                "Content-Disposition": f"inline; filename=planilla_compras.pdf"
+            }
+        )
+    except Exception as e:
+        # Log the error and raise an HTTPException
+        print(f"ERROR generating PDF for compras report: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error generando PDF: {str(e)}")
+
+
+@app.get("/imprimir/ventas")
+async def imprimir_planilla_ventas(current_user: UserInDB = Depends(has_role(["admin", "lect"]))):
+    """Generate and return a PDF report with only ventas for client-side viewing/printing."""
+    # Prepare data with only ventas
+    ventas_data = [{"tipo": "Venta", **entry} for entry in ventas_entries.values()]
+
+    # Sort by date and time
+    ventas_data.sort(key=lambda x: (x.get("fecha") or "", x.get("hora_ingreso") or ""), reverse=True)
+
+    # Generate PDF in Planilla directory for persistence
+    try:
+        planilla_folder = get_planilla_folder_for_today()
+        filename = os.path.join(planilla_folder, f"planilla_ventas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
+        print(f"DEBUG: Generando planilla de ventas en: {filename}")
+        
+        generar_planilla(ventas_data, filename)
+        print(f"DEBUG: Planilla de ventas generada exitosamente")
+        
+        # On Windows, try to print directly
+        if platform.system() == "Windows":
+            print(f"DEBUG: Intentando imprimir planilla de ventas")
+            try:
+                _try_print_file_windows(filename, copies=1)
+                print(f"DEBUG: Planilla enviada a impresora")
+                return JSONResponse(content={"status": "success", "message": "Planilla de ventas guardada en Planilla/ e impresa"})
+            except Exception as print_error:
+                print(f"WARN: Error al imprimir, devolviendo PDF: {print_error}")
+        
+        # On Linux or if Windows printing failed, return PDF to browser
+        print(f"DEBUG: Devolviendo PDF al navegador para visualización/impresión")
+        return FileResponse(
+            path=filename,
+            media_type="application/pdf",
+            filename=f"planilla_ventas.pdf",
+            headers={
+                "Content-Disposition": f"inline; filename=planilla_ventas.pdf"
+            }
+        )
+    except Exception as e:
+        # Log the error and raise an HTTPException
+        print(f"ERROR generating PDF for ventas report: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error generando PDF: {str(e)}")
 
 @app.get("/ver/planilla-completa")
 async def ver_planilla_completa(current_user: UserInDB = Depends(has_role(["admin", "lect"]))):
