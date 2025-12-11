@@ -229,3 +229,94 @@ def upload_to_drive(local_path, folder_type="pesadas", subfolder=None):
     
     result = gdrive_manager.upload_file(local_path, folder_id, subfolder)
     return result is not None
+
+
+# Cola de archivos pendientes de subir
+import threading
+import queue
+import time
+
+upload_queue = queue.Queue()
+upload_thread = None
+upload_thread_running = False
+
+def _upload_worker():
+    """Worker thread que procesa la cola de subidas en background"""
+    global upload_thread_running
+    
+    while upload_thread_running:
+        try:
+            # Obtener siguiente archivo con timeout
+            item = upload_queue.get(timeout=1.0)
+            if item is None:  # Señal de parada
+                break
+            
+            local_path, folder_type, subfolder = item
+            
+            try:
+                # Intentar subir
+                success = upload_to_drive(local_path, folder_type, subfolder)
+                if success:
+                    print(f"✓ Archivo subido a Google Drive: {os.path.basename(local_path)}")
+                else:
+                    print(f"⚠ Falló subida de {os.path.basename(local_path)}, reintentando...")
+                    # Volver a encolar para reintentar
+                    upload_queue.put(item)
+                    time.sleep(5)  # Esperar antes de reintentar
+            except Exception as e:
+                print(f"✗ Error subiendo {os.path.basename(local_path)}: {e}")
+                # Volver a encolar para reintentar
+                upload_queue.put(item)
+                time.sleep(5)
+            
+            upload_queue.task_done()
+            
+        except queue.Empty:
+            continue
+        except Exception as e:
+            print(f"✗ Error en worker de subida: {e}")
+            time.sleep(1)
+
+
+def start_upload_worker():
+    """Inicia el thread de subida en background"""
+    global upload_thread, upload_thread_running
+    
+    if upload_thread is not None and upload_thread.is_alive():
+        return
+    
+    upload_thread_running = True
+    upload_thread = threading.Thread(target=_upload_worker, daemon=True, name="GDriveUploader")
+    upload_thread.start()
+    print("✓ Worker de subida a Google Drive iniciado")
+
+
+def queue_upload(local_path, folder_type="pesadas", subfolder=None):
+    """
+    Encola un archivo para subir a Google Drive de forma asíncrona
+    NO BLOQUEA - retorna inmediatamente
+    
+    Args:
+        local_path: Ruta del archivo local
+        folder_type: Tipo de carpeta ("pesadas", "planillas", "backups")
+        subfolder: Subcarpeta opcional (ej: fecha)
+    """
+    if not os.path.exists(local_path):
+        print(f"⚠ Archivo no existe: {local_path}")
+        return
+    
+    upload_queue.put((local_path, folder_type, subfolder))
+    print(f"📤 Archivo encolado para Google Drive: {os.path.basename(local_path)} ({upload_queue.qsize()} pendientes)")
+
+
+def stop_upload_worker():
+    """Detiene el worker de subida"""
+    global upload_thread_running
+    
+    if upload_thread is None or not upload_thread.is_alive():
+        return
+    
+    upload_thread_running = False
+    upload_queue.put(None)  # Señal de parada
+    upload_thread.join(timeout=5)
+    print("✓ Worker de subida detenido")

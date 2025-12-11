@@ -103,20 +103,449 @@ document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY_COMPRAS = 'comprasData';
     const STORAGE_KEY_VENTAS = 'ventasData';
     const STORAGE_KEY_TOKEN = 'accessToken'; // Key for storing JWT
+    const STORAGE_KEY_PENDING_SYNC = 'pendingSyncQueue'; // Cola de sincronización offline
     const CUTOFF_HOUR = 18; // Hour (0-23) after which data should be hidden
     
-    // Dynamic configuration for deployment - pointing to remote server
-    let API_BASE_URL = 'http://91.108.124.58:8001'; // Remote VPS
-    let WS_URL = 'ws://91.108.124.58:8001/ws';
+    // Dynamic configuration for deployment - HTTPS for production
+    // Detectar automáticamente el protocolo (funciona en localhost y producción)
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
-    console.log('✓ Using remote VPS server configuration');
+    let API_BASE_URL, WS_URL;
+    
+    if (isLocalhost) {
+        // Desarrollo local
+        API_BASE_URL = 'http://127.0.0.1:8001';
+        WS_URL = 'ws://127.0.0.1:8001/ws';
+        console.log('✓ Using localhost configuration');
+    } else {
+        // Producción con dominio (usa el mismo dominio y protocolo)
+        const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host; // Incluye puerto si existe
+        
+        API_BASE_URL = `${protocol}//${host}`;
+        WS_URL = `${wsProtocol}//${host}/ws`;
+        console.log('✓ Using production configuration:', API_BASE_URL);
+    }
+    
+    // Estado de conectividad
+    let isOnline = navigator.onLine;
+    let syncInProgress = false;
 
     // --- Helper Functions ---
     function shouldShowData() {
         // Returns true if the current hour is before the cutoff hour
         return new Date().getHours() < CUTOFF_HOUR;
-
     }
+
+    // --- Sistema de Sincronización Offline ---
+    
+    // Obtener cola de pendientes
+    function getPendingSyncQueue() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY_PENDING_SYNC);
+            return data ? JSON.parse(data) : [];
+        } catch (e) {
+            console.error('Error leyendo cola de sincronización:', e);
+            return [];
+        }
+    }
+    
+    // Guardar cola de pendientes
+    function savePendingSyncQueue(queue) {
+        try {
+            localStorage.setItem(STORAGE_KEY_PENDING_SYNC, JSON.stringify(queue));
+        } catch (e) {
+            console.error('Error guardando cola de sincronización:', e);
+        }
+    }
+    
+    // Agregar operación a la cola
+    function addToSyncQueue(operation) {
+        const queue = getPendingSyncQueue();
+        operation.timestamp = Date.now();
+        operation.attempts = 0;
+        queue.push(operation);
+        savePendingSyncQueue(queue);
+        console.log(`📝 Operación agregada a cola offline (${queue.length} pendientes)`);
+        updateSyncIndicator();
+    }
+    
+    // Actualizar indicador visual de sincronización
+    function updateSyncIndicator() {
+        const queue = getPendingSyncQueue();
+        const count = queue.length;
+        
+        // Buscar o crear indicador
+        let indicator = document.getElementById('sync-indicator');
+        if (!indicator && count > 0) {
+            indicator = document.createElement('div');
+            indicator.id = 'sync-indicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: ${isOnline ? '#ff9800' : '#f44336'};
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: bold;
+                z-index: 10000;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            `;
+            document.body.appendChild(indicator);
+        }
+        
+        if (indicator) {
+            if (count > 0) {
+                const icon = isOnline ? '🔄' : '📴';
+                const status = isOnline ? 'Sincronizando...' : 'Sin conexión';
+                indicator.innerHTML = `${icon} ${status} (${count})`;
+                indicator.style.background = isOnline ? '#ff9800' : '#f44336';
+                indicator.style.display = 'flex';
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+    }
+    
+    // Intentar sincronizar cola pendiente
+    async function processSyncQueue() {
+        if (syncInProgress || !isOnline) return;
+        
+        const queue = getPendingSyncQueue();
+        if (queue.length === 0) {
+            updateSyncIndicator();
+            return;
+        }
+        
+        syncInProgress = true;
+        console.log(`🔄 Procesando ${queue.length} operaciones pendientes...`);
+        
+        const newQueue = [];
+        let successCount = 0;
+        let failCount = 0;
+        
+        for (const operation of queue) {
+            operation.attempts = (operation.attempts || 0) + 1;
+            
+            console.log(`🔄 Intentando sincronizar: ${operation.type} (intento ${operation.attempts}/5)`, {
+                id: operation.id,
+                data: operation.data
+            });
+            
+            try {
+                const result = await executeOperation(operation);
+                successCount++;
+                console.log(`✅ Operación sincronizada: ${operation.type}`, result);
+                
+                // Si era una creación con ID temporal, eliminar la fila temporal de la UI y localStorage
+                if (operation.type.startsWith('create_') && operation.id && operation.id.toString().startsWith('temp_')) {
+                    console.log(`🗑️ Eliminando fila temporal: ${operation.id}`);
+                    
+                    // Eliminar del DOM
+                    const tempRow = document.querySelector(`tr[data-id="${operation.id}"]`);
+                    if (tempRow) {
+                        tempRow.remove();
+                        console.log(`✓ Fila temporal eliminada del DOM`);
+                    }
+                    
+                    // Eliminar del localStorage
+                    try {
+                        const type = operation.type.includes('compra') ? 'compras' : 'ventas';
+                        const storageKey = type === 'compras' ? STORAGE_KEY_COMPRAS : STORAGE_KEY_VENTAS;
+                        const localData = loadDataFromLocalStorage(type) || [];
+                        const filteredData = localData.filter(item => item.id !== operation.id);
+                        
+                        if (filteredData.length !== localData.length) {
+                            saveDataToLocalStorage(type, filteredData);
+                            console.log(`✓ Registro temporal eliminado de localStorage`);
+                        }
+                    } catch (e) {
+                        console.warn('Error limpiando localStorage:', e);
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ Error en sincronización (intento ${operation.attempts}/5):`, {
+                    type: operation.type,
+                    id: operation.id,
+                    error: error.message,
+                    fullError: error
+                });
+                
+                // Más intentos: cambiar de 3 a 5 intentos
+                if (operation.attempts < 5) {
+                    newQueue.push(operation);
+                    failCount++;
+                } else {
+                    console.error(`⛔ Operación DESCARTADA tras 5 intentos:`, operation);
+                    const tipoLegible = operation.type.replace('_', ' ').replace('compra', 'compra').replace('venta', 'venta');
+                    showToast(`⚠️ Operación perdida: ${tipoLegible}. Verifica tu conexión y reintenta manualmente.`, 'error', 8000);
+                }
+            }
+            
+            // Pequeña pausa entre operaciones para no saturar
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        savePendingSyncQueue(newQueue);
+        syncInProgress = false;
+        
+        if (successCount > 0) {
+            showToast(`✓ ${successCount} de ${queue.length} operaciones sincronizadas`, 'success', 3000);
+        }
+        
+        if (failCount > 0 && successCount === 0) {
+            showToast(`⚠ ${failCount} operaciones fallarón, reintentando...`, 'warning', 3000);
+        }
+        
+        updateSyncIndicator();
+        
+        // Si quedan pendientes, reintentar más rápido al principio, más lento después
+        if (newQueue.length > 0) {
+            const allAttempts = newQueue.map(op => op.attempts || 0);
+            const maxAttempts = Math.max(...allAttempts);
+            const delay = maxAttempts < 2 ? 5000 : (maxAttempts < 4 ? 15000 : 30000);
+            console.log(`⏳ Reintentando en ${delay/1000}s...`);
+            setTimeout(processSyncQueue, delay);
+        }
+    }
+    
+    // Ejecutar operación sincronizada
+    async function executeOperation(operation) {
+        const token = getToken();
+        if (!token) {
+            throw new Error('No hay token de autenticación');
+        }
+        
+        const headers = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+        
+        let url, method, body;
+        
+        // Si el ID es temporal (empieza con temp_), forzar como CREATE
+        const hasTemporaryId = operation.id && operation.id.toString().startsWith('temp_');
+        
+        switch (operation.type) {
+            case 'create_compra':
+                url = `${API_BASE_URL}/compras`;
+                method = 'POST';
+                body = JSON.stringify(operation.data);
+                break;
+            case 'update_compra':
+                // Si tiene ID temporal, convertir a CREATE
+                if (hasTemporaryId) {
+                    console.log(`⚠️ ID temporal detectado, convirtiendo UPDATE a CREATE: ${operation.id}`);
+                    url = `${API_BASE_URL}/compras`;
+                    method = 'POST';
+                    body = JSON.stringify(operation.data);
+                } else {
+                    url = `${API_BASE_URL}/compras/${operation.id}`;
+                    method = 'PUT';
+                    body = JSON.stringify(operation.data);
+                }
+                break;
+            case 'delete_compra':
+                // Si tiene ID temporal, no hacer nada (no existe en servidor)
+                if (hasTemporaryId) {
+                    console.log(`⚠️ ID temporal detectado, ignorando DELETE: ${operation.id}`);
+                    return { success: true, skipped: true };
+                }
+                url = `${API_BASE_URL}/compras/${operation.id}`;
+                method = 'DELETE';
+                break;
+            case 'create_venta':
+                url = `${API_BASE_URL}/ventas`;
+                method = 'POST';
+                body = JSON.stringify(operation.data);
+                break;
+            case 'update_venta':
+                // Si tiene ID temporal, convertir a CREATE
+                if (hasTemporaryId) {
+                    console.log(`⚠️ ID temporal detectado, convirtiendo UPDATE a CREATE: ${operation.id}`);
+                    url = `${API_BASE_URL}/ventas`;
+                    method = 'POST';
+                    body = JSON.stringify(operation.data);
+                } else {
+                    url = `${API_BASE_URL}/ventas/${operation.id}`;
+                    method = 'PUT';
+                    body = JSON.stringify(operation.data);
+                }
+                break;
+            case 'delete_venta':
+                // Si tiene ID temporal, no hacer nada (no existe en servidor)
+                if (hasTemporaryId) {
+                    console.log(`⚠️ ID temporal detectado, ignorando DELETE: ${operation.id}`);
+                    return { success: true, skipped: true };
+                }
+                url = `${API_BASE_URL}/ventas/${operation.id}`;
+                method = 'DELETE';
+                break;
+            default:
+                throw new Error(`Tipo de operación desconocido: ${operation.type}`);
+        }
+        
+        const response = await fetch(url, {
+            method,
+            headers,
+            body
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => 'Error desconocido');
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        // DELETE puede no retornar JSON
+        if (method === 'DELETE') {
+            return { success: true };
+        }
+        
+        return await response.json();
+    }
+    
+    // Monitorear cambios de conectividad
+    window.addEventListener('online', async () => {
+        console.log('✅ EVENTO ONLINE DETECTADO');
+        
+        // Verificar que realmente hay conexión con el servidor
+        try {
+            const testResponse = await fetch(`${API_BASE_URL}/`, { 
+                method: 'HEAD',
+                cache: 'no-cache'
+            }).catch(() => null);
+            
+            if (testResponse && testResponse.ok) {
+                console.log('✅ SERVIDOR ACCESIBLE - Conexión confirmada');
+                isOnline = true;
+                updateSyncIndicator();
+                
+                const pendingCount = getPendingSyncQueue().length;
+                if (pendingCount > 0) {
+                    showToast(`📡 Conexión restaurada - Sincronizando ${pendingCount} operaciones...`, 'info', 3000);
+                    // Esperar un momento para asegurar que la conexión esté estable
+                    setTimeout(() => processSyncQueue(), 1000);
+                } else {
+                    showToast('✓ Conexión restaurada', 'success', 2000);
+                }
+            } else {
+                console.log('⚠️ Servidor aún no accesible, reintentando en 5s...');
+                isOnline = false;
+                setTimeout(() => window.dispatchEvent(new Event('online')), 5000);
+            }
+        } catch (error) {
+            console.log('⚠️ Error verificando servidor, reintentando en 5s...', error);
+            isOnline = false;
+            setTimeout(() => window.dispatchEvent(new Event('online')), 5000);
+        }
+    });
+    
+    window.addEventListener('offline', () => {
+        console.log('⚠️ CONEXIÓN PERDIDA');
+        isOnline = false;
+        updateSyncIndicator();
+        showToast('📴 Sin conexión - Los datos se guardarán localmente', 'warning', 5000);
+    });
+    
+    // Chequeo periódico de conectividad (cada 30 segundos si hay pendientes)
+    setInterval(async () => {
+        const pendingCount = getPendingSyncQueue().length;
+        
+        // Solo chequear si hay operaciones pendientes y no estamos sincronizando
+        if (pendingCount > 0 && !syncInProgress) {
+            console.log('🔍 Verificando conectividad...');
+            
+            try {
+                const testResponse = await fetch(`${API_BASE_URL}/`, { 
+                    method: 'HEAD',
+                    cache: 'no-cache',
+                    signal: AbortSignal.timeout(5000)  // 5 segundos timeout
+                }).catch(() => null);
+                
+                if (testResponse && testResponse.ok) {
+                    if (!isOnline) {
+                        console.log('✅ Servidor accesible nuevamente!');
+                        isOnline = true;
+                        updateSyncIndicator();
+                        showToast('📡 Conexión detectada - Sincronizando...', 'info', 2000);
+                    }
+                    processSyncQueue();
+                } else {
+                    if (isOnline) {
+                        console.log('⚠️ Servidor no accesible');
+                        isOnline = false;
+                        updateSyncIndicator();
+                    }
+                }
+            } catch (error) {
+                if (isOnline) {
+                    console.log('⚠️ Error verificando servidor:', error.message);
+                    isOnline = false;
+                    updateSyncIndicator();
+                }
+            }
+        }
+    }, 30000); // Cada 30 segundos
+    
+    // Inicializar estado de conectividad al cargar
+    setTimeout(() => {
+        console.log(`📡 Estado inicial: ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
+        const pendingCount = getPendingSyncQueue().length;
+        if (pendingCount > 0) {
+            console.log(`📋 ${pendingCount} operaciones pendientes de sincronizar`);
+        }
+        updateSyncIndicator();
+        
+        if (isOnline && pendingCount > 0) {
+            console.log('🔄 Iniciando sincronización automática...');
+            processSyncQueue();
+        }
+    }, 2000);
+    
+    // Funciones de debug globales (usar en consola del navegador)
+    window.debugSync = {
+        verCola: () => {
+            const queue = getPendingSyncQueue();
+            console.log(`📋 Cola de sincronización (${queue.length} operaciones):`);
+            queue.forEach((op, i) => {
+                console.log(`  ${i+1}. ${op.type} - Intentos: ${op.attempts || 0}/5`, op);
+            });
+            return queue;
+        },
+        limpiarCola: () => {
+            if (confirm('¿Estás seguro de limpiar TODA la cola?')) {
+                savePendingSyncQueue([]);
+                updateSyncIndicator();
+                console.log('✓ Cola limpiada');
+            }
+        },
+        forzarSync: () => {
+            console.log('🔄 Forzando sincronización...');
+            processSyncQueue();
+        },
+        estado: () => {
+            const queue = getPendingSyncQueue();
+            console.log(`📊 Estado del sistema:
+  - Conectividad: ${isOnline ? '✅ ONLINE' : '❌ OFFLINE'}
+  - Operaciones pendientes: ${queue.length}
+  - Sincronización en progreso: ${syncInProgress ? 'SÍ' : 'NO'}
+  - URL del servidor: ${API_BASE_URL}`);
+            return {
+                isOnline,
+                pendingOperations: queue.length,
+                syncInProgress,
+                apiUrl: API_BASE_URL
+            };
+        }
+    };
+    
+    console.log('💡 Funciones de debug disponibles: window.debugSync.verCola(), window.debugSync.limpiarCola(), window.debugSync.forzarSync(), window.debugSync.estado()');
 
     // --- Authentication Functions ---
     // --- CLIENT-SIDE CREDENTIALS (only these combinations accepted) ---
@@ -1226,32 +1655,75 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const response = await fetch(endpoint, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    let errorDetail = `Error del servidor (${response.status})`;
+                    try {
+                        // Try to parse JSON error detail from backend
+                        const errorData = await response.json();
+                        errorDetail = errorData.detail || errorDetail;
+                    } catch (e) {
+                        // If response is not JSON or parsing fails, use the status text
+                        errorDetail = response.statusText || errorDetail;
+                        console.warn("Could not parse JSON error response from server.");
+                    }
+                    throw new Error(errorDetail);
                 }
-            });
 
-            if (!response.ok) {
-                 let errorDetail = `Error del servidor (${response.status})`;
-                 try {
-                     // Try to parse JSON error detail from backend
-                     const errorData = await response.json();
-                     errorDetail = errorData.detail || errorDetail;
-                 } catch (e) {
-                     // If response is not JSON or parsing fails, use the status text
-                     errorDetail = response.statusText || errorDetail;
-                     console.warn("Could not parse JSON error response from server.");
-                 }
-                throw new Error(errorDetail);
+                // Optional: Remove row immediately for faster UI feedback,
+                // although WebSocket should handle it. Uncomment if needed.
+                // row.remove();
+                console.log(`Registro ${id} (${type}) eliminado. La tabla se actualizará vía WebSocket.`);
+                try { showToast('Registro eliminado correctamente.', 'success'); } catch(_) {}
+                
+            } catch (fetchError) {
+                // Detectar si es error de red/conectividad
+                const isNetworkError = 
+                    !navigator.onLine || 
+                    fetchError.message.includes('Failed to fetch') || 
+                    fetchError.message.includes('NetworkError') ||
+                    fetchError.message.includes('ERR_ADDRESS_UNREACHABLE') ||
+                    fetchError.message.includes('ERR_FAILED') ||
+                    fetchError.name === 'TypeError';
+                
+                if (isNetworkError) {
+                    console.log('🔴 ERROR DE RED DETECTADO - Encolando eliminación');
+                    console.log('📋 Detalles del error:', fetchError.message);
+                    
+                    // Si el ID es temporal, simplemente remover (no existe en servidor)
+                    if (id && id.toString().startsWith('temp_')) {
+                        console.log('⚠️ ID temporal - Eliminando solo localmente');
+                        row.remove();
+                        showToast('✓ Registro eliminado localmente', 'success');
+                    } else {
+                        // ID real - encolar para eliminar cuando vuelva internet
+                        const operation = {
+                            type: `delete_${type.slice(0, -1)}`,
+                            id: id,
+                            timestamp: Date.now()
+                        };
+                        
+                        addToSyncQueue(operation);
+                        
+                        // Remover visualmente
+                        row.remove();
+                        showToast('📴 Sin conexión - Eliminación encolada', 'warning', 4000);
+                    }
+                    
+                    // Marcar como offline
+                    isOnline = false;
+                    updateSyncIndicator();
+                } else {
+                    throw fetchError;
+                }
             }
-
-            // Optional: Remove row immediately for faster UI feedback,
-            // although WebSocket should handle it. Uncomment if needed.
-            // row.remove();
-            console.log(`Registro ${id} (${type}) eliminado. La tabla se actualizará vía WebSocket.`);
-            try { showToast('Registro eliminado correctamente.', 'success'); } catch(_) {}
 
         } catch (error) {
             console.error(`Error al eliminar el registro (${type}):`, error);
@@ -1358,28 +1830,139 @@ document.addEventListener('DOMContentLoaded', function() {
             const endpoint = isNew ? `${API_BASE_URL}/${type}` : `${API_BASE_URL}/${type}/${id}`;
             const method = isNew ? 'POST' : 'PUT';
 
-            const response = await fetch(endpoint, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(formData)
-            });
+            let saved;
+            
+            // Intentar guardar en el servidor
+            try {
+                const response = await fetch(endpoint, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
 
-            if (!response.ok) {
-                let errorDetail = `Error del servidor (${response.status})`;
-                try {
-                    const errorData = await response.json();
-                    errorDetail = errorData.detail || errorDetail;
-                } catch (e) {
-                    errorDetail = response.statusText || errorDetail;
+                if (!response.ok) {
+                    let errorDetail = `Error del servidor (${response.status})`;
+                    try {
+                        const errorData = await response.json();
+                        errorDetail = errorData.detail || errorDetail;
+                    } catch (e) {
+                        errorDetail = response.statusText || errorDetail;
+                    }
+                    throw new Error(errorDetail);
                 }
-                throw new Error(errorDetail);
-            }
 
-            const saved = await response.json();
-            // Update row with returned data
+                saved = await response.json();
+            } catch (fetchError) {
+                // Detectar si es error de red/conectividad
+                const isNetworkError = 
+                    !navigator.onLine || 
+                    fetchError.message.includes('Failed to fetch') || 
+                    fetchError.message.includes('NetworkError') ||
+                    fetchError.message.includes('ERR_ADDRESS_UNREACHABLE') ||
+                    fetchError.message.includes('ERR_FAILED') ||
+                    fetchError.name === 'TypeError';
+                
+                if (isNetworkError) {
+                    console.log('🔴 ERROR DE RED DETECTADO - Guardando en cola offline');
+                    console.log('📋 Detalles del error:', fetchError.message);
+                    
+                    // REUTILIZAR ID temporal si ya existe, o generar uno nuevo
+                    let tempId;
+                    if (id && id.toString().startsWith('temp_')) {
+                        // Ya tiene ID temporal - reutilizarlo
+                        tempId = id;
+                        console.log('♻️ Reutilizando ID temporal existente:', tempId);
+                    } else if (isNew) {
+                        // Nuevo registro - generar ID temporal
+                        tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                        console.log('🆕 Generando nuevo ID temporal:', tempId);
+                    } else {
+                        // Tiene ID real - usar ese
+                        tempId = id;
+                    }
+                    
+                    // Determinar si es CREATE o UPDATE
+                    const shouldCreate = isNew || (tempId && tempId.toString().startsWith('temp_'));
+                    const operationType = shouldCreate ? `create_${type.slice(0, -1)}` : `update_${type.slice(0, -1)}`;
+                    
+                    // Calcular horas AHORA (momento del guardado offline)
+                    const currentTime = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                    const { horaInCell, horaOutCell } = getHoraCells(row);
+                    let horaIngreso = horaInCell?.textContent?.trim() || '-';
+                    let horaSalida = horaOutCell?.textContent?.trim() || '-';
+                    
+                    // Si horaIngreso está vacía y hay bruto, setear hora actual
+                    if ((horaIngreso === '-' || !horaIngreso) && formData.bruto != null) {
+                        horaIngreso = currentTime;
+                        console.log(`⏰ Registrando hora_ingreso: ${horaIngreso}`);
+                    }
+                    
+                    // Si horaSalida está vacía y hay tara, setear hora actual
+                    if ((horaSalida === '-' || !horaSalida) && formData.tara != null) {
+                        horaSalida = currentTime;
+                        console.log(`⏰ Registrando hora_salida: ${horaSalida}`);
+                    }
+                    
+                    // Agregar horas al formData que se enviará al servidor
+                    const dataWithHours = {
+                        ...formData,
+                        hora_ingreso: horaIngreso !== '-' ? horaIngreso : null,
+                        hora_salida: horaSalida !== '-' ? horaSalida : null
+                    };
+                    
+                    // Buscar si ya existe una operación pendiente con este ID
+                    const queue = getPendingSyncQueue();
+                    const existingOpIndex = queue.findIndex(op => op.id === tempId);
+                    
+                    if (existingOpIndex >= 0) {
+                        // Actualizar operación existente con nuevos datos
+                        console.log('🔄 Actualizando operación existente en cola');
+                        queue[existingOpIndex].data = dataWithHours;
+                        queue[existingOpIndex].timestamp = Date.now();
+                        savePendingSyncQueue(queue);
+                    } else {
+                        // Crear nueva operación
+                        console.log('➕ Agregando nueva operación a cola');
+                        const operation = {
+                            type: operationType,
+                            data: dataWithHours,
+                            id: tempId,
+                            timestamp: Date.now()
+                        };
+                        addToSyncQueue(operation);
+                    }
+                    
+                    // Simular respuesta guardada localmente
+                    saved = {
+                        id: tempId,
+                        ...dataWithHours,
+                        fecha: new Date().toLocaleDateString('es-AR'),
+                        neto: (formData.bruto || 0) - (formData.tara || 0) - (formData.merma || 0),
+                        hora_ingreso: horaIngreso,
+                        hora_salida: horaSalida
+                    };
+                    
+                    if (!silent) {
+                        showToast('📴 Sin conexión - Guardado localmente (se sincronizará automáticamente)', 'warning', 4000);
+                    }
+                    
+                    // Marcar como online = false para activar el sistema offline
+                    isOnline = false;
+                    updateSyncIndicator();
+                    
+                    // Continuar con actualización de fila (sin error)
+                    // NO lanzar error - el guardado offline fue exitoso
+                } else {
+                    // Otro tipo de error (validación, permisos, etc)
+                    console.error('❌ Error NO relacionado con red:', fetchError);
+                    throw fetchError;
+                }
+            }
+            
+            // Update row with returned data (online o offline)
             if (saved && saved.id) {
                 row.dataset.id = saved.id;
                 row.dataset.isNew = 'false';
@@ -1450,6 +2033,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return true;
 
         } catch (error) {
+            // Errores de validación, parseo, etc. (NO errores de red)
             console.error(`Error al guardar (${type}):`, error);
             if (!silent) showToast(`No se pudo guardar el registro: ${error.message}`, 'error');
             isUpdating = false;

@@ -33768,3 +33768,9 @@ zipfile.BadZipFile: Truncated file header
 2025-12-09 10:53:42,340 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
 2025-12-09 10:53:42,430 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
 2025-12-09 10:53:42,431 - daily_excel_logger - INFO - Successfully loaded 1 Compra entries and 0 Venta entries.
+2025-12-10 12:58:08,064 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-10 12:58:08,108 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-10 12:58:08,109 - daily_excel_logger - INFO - No sheet found for today '2025-12-10'. Returning empty data.
+2025-12-10 12:58:40,974 - daily_excel_logger - INFO - Attempting to load daily data from: daily_log.xlsx
+2025-12-10 12:58:41,025 - daily_excel_logger - INFO - Loaded existing workbook: daily_log.xlsx
+2025-12-10 12:58:41,025 - daily_excel_logger - INFO - No sheet found for today '2025-12-10'. Returning empty data.

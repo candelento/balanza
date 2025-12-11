@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico PWA - Sistema de Pesaje</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .status-box {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .status-box.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .status-box.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .status-box.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .info-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        .cache-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .cache-item {
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .icon {
+            font-size: 48px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+        }
+        #log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico PWA - Sistema de Pesaje</h1>
+        
+        <div id="swStatus" class="status-box">
+            <strong>Estado del Service Worker:</strong>
+            <span id="swStatusText">Verificando...</span>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <strong>🌐 URL Actual</strong>
+                <span id="currentUrl"></span>
+            </div>
+            <div class="info-item">
+                <strong>🔒 Protocolo</strong>
+                <span id="protocol"></span>
+            </div>
+            <div class="info-item">
+                <strong>📱 Navegador</strong>
+                <span id="browser"></span>
+            </div>
+            <div class="info-item">
+                <strong>🌍 Online/Offline</strong>
+                <span id="onlineStatus"></span>
+            </div>
+        </div>
+        
+        <div id="cacheStatus" class="status-box">
+            <strong>💾 Estado del Caché:</strong>
+            <span id="cacheStatusText">Verificando...</span>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 Pruebas y Acciones</h3>
+            <button onclick="checkServiceWorker()">🔄 Verificar Service Worker</button>
+            <button onclick="checkCache()">💾 Ver Caché</button>
+            <button onclick="testOffline()">📡 Simular Offline</button>
+            <button onclick="clearCache()" class="danger">🗑️ Limpiar Caché</button>
+            <button onclick="unregisterSW()" class="danger">❌ Desregistrar SW</button>
+            <button onclick="window.location.href='/'" style="background: #28a745;">🏠 Ir al Sistema</button>
+        </div>
+        
+        <div id="log"></div>
+        
+        <div id="cacheList" class="cache-list" style="display: none;">
+            <h3>📦 Archivos en Caché:</h3>
+            <div id="cacheItems"></div>
+        </div>
+    </div>
+    
+    <script>
+        const log = (message, type = 'info') => {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const emoji = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logEl.innerHTML += `[${timestamp}] ${emoji} ${message}<br>`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        };
+        
+        // Información básica
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('protocol').textContent = window.location.protocol === 'https:' ? '🔒 HTTPS (Seguro)' : window.location.protocol === 'http:' && window.location.hostname === 'localhost' ? '🏠 HTTP Local (OK)' : '⚠️ HTTP (Inseguro)';
+        document.getElementById('browser').textContent = navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : navigator.userAgent.includes('Safari') ? 'Safari' : 'Otro';
+        
+        const updateOnlineStatus = () => {
+            const status = navigator.onLine ? '🟢 Online' : '🔴 Offline';
+            document.getElementById('onlineStatus').textContent = status;
+            log(`Estado de conexión: ${status}`, navigator.onLine ? 'success' : 'warning');
+        };
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+        
+        // Verificar Service Worker
+        async function checkServiceWorker() {
+            log('Verificando Service Worker...');
+            
+            if (!('serviceWorker' in navigator)) {
+                document.getElementById('swStatus').className = 'status-box error';
+                document.getElementById('swStatusText').textContent = '❌ Service Workers NO soportados en este navegador';
+                log('Service Workers no están disponibles', 'error');
+                return;
+            }
+            
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                
+                if (registration) {
+                    document.getElementById('swStatus').className = 'status-box success';
+                    document.getElementById('swStatusText').innerHTML = `
+                        ✅ Service Worker REGISTRADO<br>
+                        📂 Scope: ${registration.scope}<br>
+                        🔧 Estado: ${registration.active ? 'Activo ✅' : 'Instalando ⏳'}
+                    `;
+                    log('Service Worker registrado correctamente', 'success');
+                    log(`Scope: ${registration.scope}`);
+                    
+                    if (registration.active) {
+                        log('Service Worker está ACTIVO y funcionando', 'success');
+                    } else if (registration.installing) {
+                        log('Service Worker se está instalando...', 'warning');
+                    } else if (registration.waiting) {
+                        log('Service Worker esperando activación', 'warning');
+                    }
+                } else {
+                    document.getElementById('swStatus').className = 'status-box warning';
+                    document.getElementById('swStatusText').textContent = '⚠️ Service Worker NO registrado. Visita la página principal primero.';
+                    log('No hay Service Worker registrado', 'warning');
+                }
+            } catch (error) {
+                document.getElementById('swStatus').className = 'status-box error';
+                document.getElementById('swStatusText').textContent = '❌ Error al verificar: ' + error.message;
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Verificar caché
+        async function checkCache() {
+            log('Verificando caché...');
+            
+            try {
+                const cacheNames = await caches.keys();
+                log(`Encontrados ${cacheNames.length} cachés`);
+                
+                if (cacheNames.length === 0) {
+                    document.getElementById('cacheStatus').className = 'status-box warning';
+                    document.getElementById('cacheStatusText').textContent = '⚠️ No hay cachés. Visita la página principal primero.';
+                    log('No hay cachés disponibles', 'warning');
+                    return;
+                }
+                
+                let totalFiles = 0;
+                const cacheItemsEl = document.getElementById('cacheItems');
+                cacheItemsEl.innerHTML = '';
+                
+                for (const cacheName of cacheNames) {
+                    log(`Caché: ${cacheName}`);
+                    const cache = await caches.open(cacheName);
+                    const keys = await cache.keys();
+                    totalFiles += keys.length;
+                    
+                    cacheItemsEl.innerHTML += `<h4>📦 ${cacheName} (${keys.length} archivos)</h4>`;
+                    
+                    keys.forEach(request => {
+                        const url = new URL(request.url);
+                        const path = url.pathname === '/' ? '/' : url.pathname.split('/').pop() || url.pathname;
+                        cacheItemsEl.innerHTML += `<div class="cache-item">✓ ${path}</div>`;
+                        log(`  - ${path}`);
+                    });
+                }
+                
+                document.getElementById('cacheStatus').className = 'status-box success';
+                document.getElementById('cacheStatusText').innerHTML = `✅ ${cacheNames.length} caché(s) con ${totalFiles} archivos`;
+                document.getElementById('cacheList').style.display = 'block';
+                log(`Total: ${totalFiles} archivos en caché`, 'success');
+            } catch (error) {
+                document.getElementById('cacheStatus').className = 'status-box error';
+                document.getElementById('cacheStatusText').textContent = '❌ Error: ' + error.message;
+                log('Error al verificar caché: ' + error.message, 'error');
+            }
+        }
+        
+        // Simular modo offline
+        function testOffline() {
+            log('Para probar offline:', 'warning');
+            log('1. Abre DevTools (F12)');
+            log('2. Ve a la pestaña Network');
+            log('3. Activa "Offline"');
+            log('4. Recarga la página (F5)');
+            log('5. Si la página carga, ¡PWA funciona! ✅', 'success');
+            alert('Abre DevTools (F12) → Network → Activa "Offline" → Recarga la página');
+        }
+        
+        // Limpiar caché
+        async function clearCache() {
+            if (!confirm('¿Estás seguro de limpiar todo el caché?')) return;
+            
+            log('Limpiando caché...');
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                document.getElementById('cacheStatus').className = 'status-box warning';
+                document.getElementById('cacheStatusText').textContent = '✅ Caché limpiado';
+                document.getElementById('cacheList').style.display = 'none';
+                log('Caché limpiado correctamente', 'success');
+            } catch (error) {
+                log('Error al limpiar caché: ' + error.message, 'error');
+            }
+        }
+        
+        // Desregistrar Service Worker
+        async function unregisterSW() {
+            if (!confirm('¿Estás seguro de desregistrar el Service Worker?')) return;
+            
+            log('Desregistrando Service Worker...');
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    await registration.unregister();
+                    log('Service Worker desregistrado', 'success');
+                    document.getElementById('swStatus').className = 'status-box warning';
+                    document.getElementById('swStatusText').textContent = '✅ Service Worker desregistrado';
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    log('No hay Service Worker para desregistrar', 'warning');
+                }
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Ejecutar verificaciones al cargar
+        window.addEventListener('load', () => {
+            log('=== Diagnóstico PWA Iniciado ===', 'success');
+            checkServiceWorker();
+            setTimeout(checkCache, 1000);
+        });
+    </script>
+</body>
+</html>

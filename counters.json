@@ -1,5 +1,5 @@
 {
-  "compra_counter": 0,
-  "venta_counter": 0,
-  "last_ticket_id": 0
+  "compra_counter": 15,
+  "venta_counter": 11,
+  "last_ticket_id": 15
 }

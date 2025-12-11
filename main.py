@@ -189,6 +189,7 @@ ENABLE_GOOGLE_DRIVE = os.getenv("ENABLE_GOOGLE_DRIVE", "false").lower() == "true
 if ENABLE_GOOGLE_DRIVE and GOOGLE_DRIVE_AVAILABLE:
     try:
         google_drive_helper.init_google_drive()
+        google_drive_helper.start_upload_worker()  # Iniciar worker asíncrono
         print("✓ Google Drive habilitado y configurado")
     except Exception as e:
         print(f"⚠ Google Drive no pudo inicializarse: {e}")
@@ -1289,7 +1290,7 @@ async def guardar_compra_pdf(compra_id: int, date: Optional[str] = None, current
     try:
         crear_pdf_recibo(datos, filename, tipo_recibo="Compra")
         
-        # **NUEVO: Subir a Google Drive si está habilitado**
+        # **NUEVO: Subir a Google Drive si está habilitado (sin bloquear)**
         if ENABLE_GOOGLE_DRIVE and google_drive_helper and google_drive_helper.gdrive_manager:
             try:
                 if found_date:
@@ -1298,9 +1299,9 @@ async def guardar_compra_pdf(compra_id: int, date: Optional[str] = None, current
                 else:
                     date_folder = datetime.now().strftime("%d-%m-%Y")
                 
-                google_drive_helper.upload_to_drive(filename, folder_type="pesadas", subfolder=date_folder)
+                google_drive_helper.queue_upload(filename, folder_type="pesadas", subfolder=date_folder)
             except Exception as gd_error:
-                print(f"⚠ Error al subir compra a Google Drive: {gd_error}")
+                print(f"⚠ Error al encolar compra para Google Drive: {gd_error}")
         
         return JSONResponse(content={"status": "success", "message": f"Ticket guardado en {filename}"})
 
@@ -1771,7 +1772,7 @@ async def guardar_venta_pdf(venta_id: int, date: Optional[str] = None, current_u
     try:
         crear_pdf_recibo(datos, filename, tipo_recibo="Venta")
         
-        # **NUEVO: Subir a Google Drive si está habilitado**
+        # **NUEVO: Subir a Google Drive si está habilitado (sin bloquear)**
         if ENABLE_GOOGLE_DRIVE and google_drive_helper and google_drive_helper.gdrive_manager:
             try:
                 if found_date:
@@ -1780,9 +1781,9 @@ async def guardar_venta_pdf(venta_id: int, date: Optional[str] = None, current_u
                 else:
                     date_folder = datetime.now().strftime("%d-%m-%Y")
                 
-                google_drive_helper.upload_to_drive(filename, folder_type="pesadas", subfolder=date_folder)
+                google_drive_helper.queue_upload(filename, folder_type="pesadas", subfolder=date_folder)
             except Exception as gd_error:
-                print(f"⚠ Error al subir venta a Google Drive: {gd_error}")
+                print(f"⚠ Error al encolar venta para Google Drive: {gd_error}")
         
         return JSONResponse(content={"status": "success", "message": f"Ticket guardado en {filename}"})
 
@@ -2041,13 +2042,13 @@ async def guardar_planilla_completa(current_user: UserInDB = Depends(has_role(["
 
         generar_planilla(todos_datos, planilla_filepath)
 
-        # **NUEVO: Subir a Google Drive si está habilitado**
+        # **NUEVO: Subir a Google Drive si está habilitado (sin bloquear)**
         if ENABLE_GOOGLE_DRIVE and google_drive_helper and google_drive_helper.gdrive_manager:
             try:
                 date_folder = datetime.now().strftime("%d-%m-%Y")
-                google_drive_helper.upload_to_drive(planilla_filepath, folder_type="planillas", subfolder=date_folder)
+                google_drive_helper.queue_upload(planilla_filepath, folder_type="planillas", subfolder=date_folder)
             except Exception as gd_error:
-                print(f"⚠ Error al subir planilla a Google Drive: {gd_error}")
+                print(f"⚠ Error al encolar planilla para Google Drive: {gd_error}")
 
         return {"status": "success", "message": "Planilla guardada", "path": planilla_filepath, "filename": desired_filename}
     except Exception as e:
@@ -2336,13 +2337,13 @@ async def create_backup(current_user: UserInDB = Depends(has_role(["admin", "lec
         import shutil
         shutil.copy2("daily_log.xlsx", backup_path)
 
-        # **NUEVO: Subir a Google Drive si está habilitado**
+        # **NUEVO: Subir a Google Drive si está habilitado (sin bloquear)**
         if ENABLE_GOOGLE_DRIVE and google_drive_helper and google_drive_helper.gdrive_manager:
             try:
                 date_folder = datetime.now().strftime("%d-%m-%Y")
-                google_drive_helper.upload_to_drive(backup_path, folder_type="backups", subfolder=date_folder)
+                google_drive_helper.queue_upload(backup_path, folder_type="backups", subfolder=date_folder)
             except Exception as gd_error:
-                print(f"⚠ Error al subir backup a Google Drive: {gd_error}")
+                print(f"⚠ Error al encolar backup para Google Drive: {gd_error}")
 
         return {"status": "success", "message": f"Backup created: {os.path.join(backup_folder, backup_filename)}"}
 
@@ -2362,6 +2363,37 @@ if getattr(sys, 'frozen', False):
 else:
     # Running in a normal Python environment
     static_dir = 'static'
+
+# Serve service worker with proper headers for PWA
+@app.get("/service-worker.js")
+async def service_worker():
+    """Serve service worker with correct MIME type and cache headers"""
+    sw_path = os.path.join(static_dir, "service-worker.js")
+    if not os.path.exists(sw_path):
+        raise HTTPException(status_code=404, detail="Service worker not found")
+    return FileResponse(
+        sw_path,
+        media_type="application/javascript",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Service-Worker-Allowed": "/"
+        }
+    )
+
+# Serve manifest.json with proper headers
+@app.get("/manifest.json")
+async def manifest():
+    """Serve PWA manifest with correct MIME type"""
+    manifest_path = os.path.join(static_dir, "manifest.json")
+    if not os.path.exists(manifest_path):
+        raise HTTPException(status_code=404, detail="Manifest not found")
+    return FileResponse(
+        manifest_path,
+        media_type="application/manifest+json",
+        headers={
+            "Cache-Control": "public, max-age=0"
+        }
+    )
 
 # Mount static files last so API routes take precedence
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
